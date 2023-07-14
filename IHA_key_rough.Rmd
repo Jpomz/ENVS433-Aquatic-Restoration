@@ -171,3 +171,8 @@ post_max_julian <- post %>%
 
 post_max_julian
 ```
+
+# pick up here  
+
+Need to read in results from pre-data and calc deviation mag / %
+
