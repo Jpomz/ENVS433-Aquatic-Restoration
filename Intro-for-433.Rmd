@@ -1,0 +1,22 @@
+---
+title: "Intro to R for ENVS433"
+author: "Justin Pomeranz"
+date: "7/14/2023"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# tidyverse  
+
+```{r}
+select()
+filter()
+group_by()
+summarise() / reframe()
+
+ggplot()
+```
+
