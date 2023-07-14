@@ -61,10 +61,6 @@ group1_pre <- pre_data %>%
 
 # group 2 annual extremes
 
-x <- sample(1:5, 10, replace = TRUE)
-roll_min(x)
-roll_mean(x, n = 7)
-
 # annual min and max
 pre_data %>%
   group_by(y) %>%
