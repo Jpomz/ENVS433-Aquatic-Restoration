@@ -1,0 +1,411 @@
+---
+title: "IHA_tutorial"
+author: "Justin Pomeranz"
+date: "7/14/2023"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(RcppRoll)
+pre <- read_csv(here::here("data/IHA/pre_data.csv"))
+```
+
+# Overview  
+
+This tutorial will show you how to calculate the IHA groups 1-3 metrics using flow data from the Colorado River before the construction of Glen Canyon Dam. 
+
+# Preliminaries  
+
+* Open RStudio  
+
+  * Make sure you are in your `ENVS433` project (look in the top right area of RStudio)  
+  
+* Make sure you have a folder called `data` in your project.  
+* Go to D2L and download the `pre_data.csv` file into your `data` folder.  
+
+  * You may also want to go ahead and download the `post_data.csv` and put it in your `data` folder while you're there.  
+
+* in the "files" pane in RStudio, open up your `data` folder and make sure your csv(s) are there. 
+  
+* load the packages you need by running the following code:
+```{r, eval=FALSE}
+library(tidyverse)
+library(RcppRoll)
+```
+
+  * If there was an error, make sure you have the `tidyverse` and `RcppRoll` packages downloaded onto your machine  
+  
+  * Remember you only need to install the packages once per machine, but you need to load them using the `library()` command every time you open RStudio.  
+  
+  * If needed, you can install the packages by running the following code: `install.packages("tidyverse")`, and `install.packages("RcppRoll")`, respectively. Make sure to re-run the `library()` commands above if needed.  
+  
+  
+## Load the data into R  
+
+If you have the correct file in your `data` folder, you can load it into R using the following command:
+```{r, eval=FALSE}
+pre <- read_csv("data/pre_data.csv")
+```
+
+* Check that the data was loaded correctly. 
+
+```{r}
+pre
+# names of columns
+names(pre)
+```
+
+  
+**Troubleshooting**  
+* Make sure your folder and file names exactly match what's written above.  
+
+### Data description  
+
+* `date` = the date of the observation  
+* `cfs` = the mean flow observed on that date, in cubic feet per second (cfs)  
+* `y` = the year of the observation (useful for grouping data later)  
+* `m` = the month of the observation (useful for grouping data later)  
+* `d` = is the day of the observation  
+* `j_date` = the Julian day of the year for the observation, where 1 = January 1st, and 365 = December 31st (except on leap years, when December 31st = 366)  
+* `consecutive_date` = sequential number identifying every single observation in the data set (1 to 3652)  
+
+### Preview data  
+
+* It's always a good idea to get to know the data you're working with  
+* we already typed the `names()` function, and I gave a brief description of each column above  
+* run the following code for other summaries and overviews of the data  
+
+```{r}
+# get the dimensions of the data: output is number of rows, and columns, respectively
+dim(pre)
+# summary() gives some general info for each column  
+# Min value, quartile distributions, mean, median, etc. 
+# for eaxmple, j_date has min = 1, max = 366 (leap years!)
+summary(pre)
+```
+
+
+### Plot your data  
+
+* It's always a good idea to plot your data as well  
+* below is a simple plot of the mean daily cfs values  
+* you can do a lot more with plotting, but this is probably all you need for this part of the assignment  
+
+  * for the management section, I'll provide code to plot some reference lines (i.e., the min/max values you're going to recommend)  
+  
+```{r}
+ggplot(pre, 
+       aes(x = date, 
+           y = cfs)) +
+  geom_line() +
+  theme_bw() +
+  labs(title = "Mean Daily CFS values at Lee's Ferry, 1930-1939",
+       y = "cubic feet per second")
+```
+  
+## IHA Metric descriptions  
+
+### Group 1  
+* Mean flow value for each month  
+  * Averaged *across* years  
+* Should end up with 12 observations  
+
+### Group 2  
+* Minimum and maximum flow values across different timeframe "windows"  
+
+  * Need to calculate min/max within a year first, and then average those values across years  
+  * end up with a single value for each metric  
+  
+### Group 3 
+* Julian date of the min/max flow  
+
+  * As above, need to calculate the Julian date for ther min/max values separately for each year  
+  
+  * Average these values across years to end up with a single value.  
+  
+## Calculations  
+
+### Calculations Group 1  
+
+* take `pre` data and "group" it by month  
+* calculate average flow value within a month, across years  
+
+  * i.e., take all the observations from January and average them together  
+
+```{r}
+# Group 1 mean monthly values
+# Hint, highlight this section to run it by adding one step at a time
+# when doing this, make sure you don't run the "%>%" at the end of the line
+
+# take data 
+pre %>% 
+  # then group the data by the month column
+  group_by(m) %>%
+  # next, calculate the average cfs 
+  summarize(m_mean = mean(cfs))
+``` 
+
+* in the code above, the output is a data frame with two columns:  
+  * `m` is the month  
+  
+  * `m_mean` is short for "monthly mean"  
+
+```{r}
+# do all the steps above and save it in a new R object called `group1_pre` 
+group1_pre <- pre %>%
+  group_by(m) %>%
+  summarize(m_mean = mean(cfs))
+# print out your new object to see it in the console
+group1_pre
+```
+
+### Calculations Group 2  
+
+The calculations for this section are slightly more complicated. We will break this section up to calculate the min and max values for each "window" separately 
+
+#### 1-day values  
+
+This is the simplest metric, where we will find the min/max value for each year, and then average those values across years. 
+
+* take `pre` data and "group" it by year  
+* calculate the min/max flow value for each year  
+* average those min/max values across years  
+
+```{r}
+# as before, run these lines one-at-a-time to see what's happening in each step
+
+# take your pre data
+pre %>%
+  # then, group it by year
+  group_by(y) %>%
+  # now, summarise your data to calculate the min and max values
+  summarise(min_1 = min(cfs), # min_1 is the name; min(cfs) is the calculation
+            max_1 = max(cfs)) %>%
+  # take our new variables (min_1, max_1), and average those across years
+  summarise(m_min_1 = mean(min_1), 
+            m_max_1 = mean(max_1))
+```
+
+* The same steps as above but saving it in a new data object  
+
+  * `pre_g2_1d` stands for "pre" data, "group 2" "1-day values
+* print out the data object to see the results  
+
+```{r}
+pre_g2_1d <- pre %>%
+  group_by(y) %>%
+  summarise(min_1 = min(cfs), 
+            max_1 = max(cfs)) %>%
+  summarise(m_min_1 = mean(min_1), 
+            m_max_1 = mean(max_1))
+```
+
+#### 3-day values  
+
+This is similar to above, but instead of looking for the single min/max value in a year, we need to take a rolling 3-day average and then select the min/max value for each year. As before, we will then average those values across years. 
+
+* take `pre` data and "group" it by year  
+* calculate the 3-day average min/max flow value for each year  
+
+  * `roll_mean(x, n = 3)` function  
+  * also note the use of `reframe()` instead of `summarise()`  
+  * This is because the `roll_mean()` function calculate multiple observations per year  
+  * the `summarize()` function only works if you're calculating a single value for each group  
+  
+* average those min/max values across years  
+
+```{r}
+# as before, run these lines one-at-a-time to see what's happening in each step
+
+# 3-day min and max
+pre %>%
+  # group the data by year
+  group_by(y) %>%
+  # reframe() becasue calculating more than one observation per group
+  # roll_mean() is calculating a mean based on a "rolling window"
+  # the n = 3 means the window width is 3
+  reframe(mean_3 = roll_mean(cfs, n = 3)) %>%
+  # now, we need to re-group it by year in order to calculate the min and max per year
+  group_by(y) %>%
+  # calculate the min/max per year
+  summarise(min_3 = min(mean_3), # min_3 is the name of the new variable; min(mean_3 is the calculation for the new variable)
+            max_3 = max(mean_3)) %>%
+# finally, average all the min/max values across years
+summarise(m_min_3 = mean(min_3),
+          m_max_3 = mean(max_3))
+```
+
+* run the code as above, but this time save it as a new object and print it out to see the results  
+
+```{r}
+# 3-day min and max
+pre_g2_3d <- pre %>%
+  group_by(y) %>%
+  reframe(mean_3 = roll_mean(cfs, n = 3)) %>%
+  group_by(y) %>%
+  summarise(min_3 = min(mean_3),
+            max_3 = max(mean_3)) %>%
+summarise(m_min_3 = mean(min_3),
+          m_max_3 = mean(max_3))
+
+pre_g2_3d
+```
+
+#### Remaining G2 metrics  
+
+We can calculate the rest of the metrics by slightly modifying the code for the 3-day calculations above  
+* `roll_mean(cfs, n = w)`, where `w` is the number of days in the window (7, 30, 90)  
+* also make sure to re-name all the data objects and calculated variables accordingly
+
+```{r}
+# 7-day min and max
+pre_g2_7d <- pre %>%
+  group_by(y) %>%
+  reframe(mean_7 = roll_mean(cfs, n = 7)) %>%
+  group_by(y) %>%
+  summarise(min_7 = min(mean_7),
+            max_7 = max(mean_7)) %>%
+summarise(m_min_7 = mean(min_7),
+          m_max_7 = mean(max_7))
+
+pre_g2_7d
+```
+
+* 30-day 
+
+```{r}
+# 30-day min and max
+pre_g2_30d <- pre %>%
+  group_by(y) %>%
+  reframe(mean_30 = roll_mean(cfs, n = 30)) %>%
+  group_by(y) %>%
+  summarise(min_30 = min(mean_30),
+            max_30 = max(mean_30)) %>%
+summarise(m_min_30 = mean(min_30),
+          m_max_30 = mean(max_30))
+
+pre_g2_30d
+```
+
+* 90-day 
+
+```{r}
+# 90-day min and max
+pre_g2_90d <- pre %>%
+  group_by(y) %>%
+  reframe(mean_90 = roll_mean(cfs, n = 90)) %>%
+  group_by(y) %>%
+  summarise(min_90 = min(mean_90),
+            max_90 = max(mean_90)) %>%
+summarise(m_min_90 = mean(min_90),
+          m_max_90 = mean(max_90))
+
+pre_g2_90d
+```
+
+### Combine and simplify G2 metrics  
+
+* calculated all metrics separately for simplicity  
+* now we will combine them and write out the results as a csv  
+* this will make it easier to put in as a table in your write up  
+
+* don't worry too much about the details  
+
+  * But if you're curious/want to learn more, come talk to me. 
+
+```{r}
+# combine all the columns of results for the 5 windows into one object
+bind_cols(pre_g2_1d,
+          pre_g2_3d,
+          pre_g2_7d,
+          pre_g2_30d,
+          pre_g2_90d) %>%
+  # make the data "long" instead of wide
+  pivot_longer(cols = starts_with("m_"), names_to = "metric", values_to = "mean") %>%
+  # separate the first column into multiple columns
+  separate(metric, c("drop", "metric", "day-window")) %>%
+  # remove the "drop" column (it's unneeded)
+  select(!drop) %>%
+  # save the results as a csv
+  # the file "g2-metrics.csv" should appear in your RStudio folder after you run this code  
+  write_csv("g2-metrics.csv")
+  
+```
+
+
+
+### Calculations Group 3  
+
+* Extract the Julian date for the min/max flows for each year  
+
+  * group the data by years  
+
+* Use the `filter()` command to find the min/max value  
+
+* Select the Julian date for that value  
+
+* average the Julian dates across years  
+
+```{r}
+# start with the data
+pre %>%
+  # group by year
+  group_by(y) %>%
+  # filter out the row of data which has the minimum flow for each year
+  filter(cfs == min(cfs)) %>%
+  # pull out just the columns we need for next step
+  select(cfs, y, j_date) %>%
+  # Ungroup the data so we can calculate the average julian date ACROSS years
+  ungroup() %>%
+  summarise(min_j_date = mean(j_date))
+  
+```
+
+* notice that the Julian dates are very early (Jan-Feb) or very late (Aug or Dec)  
+
+* This averaged out to ~ `j_date = 128` which is approximately May 8th.  
+
+Repeat code but save it as object `pre_min_julian`
+
+```{r}
+pre_min_julian <- pre %>%
+  group_by(y) %>%
+  filter(cfs == min(cfs)) %>%
+  select(cfs, y, j_date) %>%
+  ungroup() %>%
+  summarise(min_j_date = mean(j_date))
+
+pre_min_julian
+```
+
+* calculate for max flow  
+
+* similar code as above, but note name changes and function inside filter to `max` 
+
+```{r}
+pre_max_julian <- pre %>%
+  group_by(y) %>%
+  filter(cfs == max(cfs)) %>%
+  select(cfs, y, j_date) %>%
+  ungroup() %>%
+  summarise(min_j_date = mean(j_date))
+
+pre_max_julian
+```
+
+* `j_date = 149` is approximately May 29th 
+
+# Moving forward    
+
+### Complete part 1  
+
+You now have all the IHA group 1-3 metrics calculated for the pre-dam data.  You will need to start a new script and repeat these calculations for the post-dam data. Make sure to make a plot of the flow values for the post-dam timeframe, as well as calculate all IHA metrics in groups 1-3. 
+You will then need to compare the value for pre-and post data and summarize the changes to hydrology following the dame closure. 
+
+### Part 2  
+For part 2, please see the other tutorial on how to calculate the standard deviations for a subset of the group 2 metrics (1-, 3-, and 7-day windows). 
+
+### Part 3  
+For part three, there is a tutorial for using the experimental flow data and plotting those results compared with your recommendations calculated in part 2.  
