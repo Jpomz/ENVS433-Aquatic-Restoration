@@ -1,0 +1,18 @@
+---
+title: "IHA_key"
+author: "Justin Pomeranz"
+date: '2023-07-13'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(RcppRoll)
+```
+
+# Introduction  
+
+This document is the key for the Indicators of Hydrologic Alteration (IHA) assignment given to ENVS433- Aquatic Restoration Students at Colorado Mesa University
+
+
