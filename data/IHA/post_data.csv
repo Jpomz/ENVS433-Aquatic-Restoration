@@ -1,4 +1,4 @@
-date,daily_mean_cfs,y,m,d,j_date,consecutive_date
+date,cfs,y,m,d,j_date,consecutive_date
 1990-01-01,7430,1990,1,1,1,1
 1990-01-02,11300,1990,1,2,2,2
 1990-01-03,15700,1990,1,3,3,3

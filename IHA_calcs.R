@@ -40,7 +40,8 @@ post_data <- post_data %>%
          d = day(date),
          j_date = yday(date),
          consecutive_date = row_number()) %>%
-  filter(y < 2000) 
+  filter(y < 2000) %>%
+  rename(cfs = daily_mean_cfs)
 
 post_data %>%
   group_by(y) %>%
@@ -227,3 +228,10 @@ pre_data %>%
   count() %>%
   ungroup() %>%
   summarize(mean(n))
+
+
+
+# Deviations and per cent magnitude ---------------------------------------
+
+# deviation magnitude: post_value - pre_value
+# % : deviation_magnitude / pre_value

@@ -328,9 +328,11 @@ bind_cols(pre_g2_1d,
   separate(metric, c("drop", "metric", "day-window")) %>%
   # remove the "drop" column (it's unneeded)
   select(!drop) %>%
+  # add a column stating which timeframe (pre_ or post_dam) this data is from
+  mutate(time_frame = "pre_dam") %>%
   # save the results as a csv
   # the file "g2-metrics.csv" should appear in your RStudio folder after you run this code  
-  write_csv("g2-metrics.csv")
+  write_csv("g2-metrics-pre.csv")
   
 ```
 
@@ -402,7 +404,54 @@ pre_max_julian
 ### Complete part 1  
 
 You now have all the IHA group 1-3 metrics calculated for the pre-dam data.  You will need to start a new script and repeat these calculations for the post-dam data. Make sure to make a plot of the flow values for the post-dam timeframe, as well as calculate all IHA metrics in groups 1-3. 
-You will then need to compare the value for pre-and post data and summarize the changes to hydrology following the dame closure. 
+
+You will then need to compare the value for pre-and post data and summarize the changes to hydrology following the dam closure. 
+
+To compare, you will calculate the deviation magnitude, and the % deviation. 
+
+$$\text{DM} = \text{post} - \text{pre} $$
+Where $DM$ is the deviation magnitude, and $pre$ and $post$ are the values for a given metric calculated before and after dam closure, respectively. 
+
+$$ \%D =  \frac{\text{DM}} {\text{pre}} $$
+
+Where $\%D$ is the per cent deviation, $DM$ is the deviation magnitude, and $pre$ is the value for a given metric calculated before dam closure.  
+
+
+The following code is an example of how to calculate these two metrics using simple values: 
+```{r}
+pre_value <- 1250
+post_value <- 555
+
+# deviation magnitude: pre_value - post_value
+dev_mag <- post_value - pre_value
+dev_mag
+
+# % deviation: dev_mag / pre_value
+(dev_mag / pre_value) * 100
+```
+
+You can also calculate these using vectorized functions. For example, see below using the 1 day min/max values from the pre-dam data set, and a hypothetical result for the post dam data
+
+```{r}
+# example data set
+# for your assignment, you should calculate this for the post-dam
+# data set as we did above in the tutorial
+post_g2_1d <- tibble(m_min_1 = 8000, m_max_1 = 30000)
+# print out example data set
+post_g2_1d
+
+# should have the same format / look similar to 
+#pre-data we calculated above
+pre_g2_1d
+
+# deviation magnitude
+dm_1d = post_g2_1d - pre_g2_1d
+dm_1d
+
+# deviation percent
+(dm_1d / pre_g2_1d) * 100
+```
+
 
 ### Part 2  
 For part 2, please see the other tutorial on how to calculate the standard deviations for a subset of the group 2 metrics (1-, 3-, and 7-day windows). 
