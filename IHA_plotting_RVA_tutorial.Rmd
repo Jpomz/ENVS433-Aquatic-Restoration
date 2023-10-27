@@ -48,8 +48,6 @@ bugs <- read_csv("data/bug_flows.csv")
 * Check that the data was loaded correctly.  
 
 
-### Plot experimental flow data
-
 # need to fix date in bugs data
 
 1,565 and 3,352 CFS
