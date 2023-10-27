@@ -1,7 +1,6 @@
 ---
 title: "IHA_tutorial"
 author: "Justin Pomeranz"
-date: "7/14/2023"
 output: html_document
 ---
 
@@ -20,9 +19,19 @@ This tutorial will show you how to calculate the IHA groups 1-3 metrics using fl
 
 * Open RStudio  
 
-  * Make sure you are in your `ENVS433` project (look in the top right area of RStudio)  
+1. Create a new project by clicking `file` > `new_project`.  
+2. Choose `new directory` > `new project`  
+3. Name your project `ENVS433`.  
+  * **Make sure to place this directory on your desktop**  
+  * You can choose to put it somewhere else, but be sure it's in a place you know and can easily access.  
+
+4. Make sure you are in your `ENVS433` project (look in the top right area of RStudio)  
   
 * Make sure you have a folder called `data` in your project.  
+  
+  * If you don't, in the `Files` pane in RStudio click `New Folder` and name it `data`  
+  * be mindful of letter cases, i.e., make sure `data` is all lowercase  
+  
 * Go to D2L and download the `pre_data.csv` file into your `data` folder.  
 
   * You may also want to go ahead and download the `post_data.csv` and put it in your `data` folder while you're there.  
@@ -59,7 +68,9 @@ names(pre)
 
   
 **Troubleshooting**  
+
 * Make sure your folder and file names exactly match what's written above.  
+
 
 ### Data description  
 
@@ -233,7 +244,7 @@ pre %>%
   summarise(min_3 = min(mean_3), # min_3 is the name of the new variable; min(mean_3 is the calculation for the new variable)
             max_3 = max(mean_3)) %>%
 # finally, average all the min/max values across years
-summarise(m_min_3 = mean(min_3),
+  summarise(m_min_3 = mean(min_3),
           m_max_3 = mean(max_3))
 ```
 
@@ -267,7 +278,7 @@ pre_g2_7d <- pre %>%
   group_by(y) %>%
   summarise(min_7 = min(mean_7),
             max_7 = max(mean_7)) %>%
-summarise(m_min_7 = mean(min_7),
+  summarise(m_min_7 = mean(min_7),
           m_max_7 = mean(max_7))
 
 pre_g2_7d
@@ -283,8 +294,8 @@ pre_g2_30d <- pre %>%
   group_by(y) %>%
   summarise(min_30 = min(mean_30),
             max_30 = max(mean_30)) %>%
-summarise(m_min_30 = mean(min_30),
-          m_max_30 = mean(max_30))
+  summarise(m_min_30 = mean(min_30),
+            m_max_30 = mean(max_30))
 
 pre_g2_30d
 ```
@@ -299,7 +310,7 @@ pre_g2_90d <- pre %>%
   group_by(y) %>%
   summarise(min_90 = min(mean_90),
             max_90 = max(mean_90)) %>%
-summarise(m_min_90 = mean(min_90),
+  summarise(m_min_90 = mean(min_90),
           m_max_90 = mean(max_90))
 
 pre_g2_90d
@@ -317,21 +328,24 @@ pre_g2_90d
 
 ```{r}
 # combine all the columns of results for the 5 windows into one object
-bind_cols(pre_g2_1d,
+pre_g2 <- bind_cols(pre_g2_1d,
           pre_g2_3d,
           pre_g2_7d,
           pre_g2_30d,
           pre_g2_90d) %>%
   # make the data "long" instead of wide
-  pivot_longer(cols = starts_with("m_"), names_to = "metric", values_to = "mean") %>%
+  pivot_longer(cols = starts_with("m_"), names_to = "metric", values_to = "mean_cfs") %>%
   # separate the first column into multiple columns
   separate(metric, c("drop", "metric", "day-window")) %>%
   # remove the "drop" column (it's unneeded)
   select(!drop) %>%
   # add a column stating which timeframe (pre_ or post_dam) this data is from
-  mutate(time_frame = "pre_dam") %>%
-  # save the results as a csv
-  # the file "g2-metrics.csv" should appear in your RStudio folder after you run this code  
+  mutate(time_frame = "pre_dam")
+
+pre_g2
+# save the results as a csv
+# the file "g2-metrics.csv" should appear in your RStudio folder after you run this code  
+pre_g2 %>%
   write_csv("g2-metrics-pre.csv")
   
 ```
