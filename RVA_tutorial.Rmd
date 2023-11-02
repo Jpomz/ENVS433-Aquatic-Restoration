@@ -1,0 +1,352 @@
+---
+title: "RVA_tutorial"
+author: "Justin Pomeranz"
+date: "8/1/2023"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(RcppRoll)
+pre <- read_csv(here::here("data/IHA/pre_data.csv"))
+```
+
+# Overview  
+
+This tutorial will show you how to calculate the rnage of variation (RVA) for selected metrics from group 2 of the IHA using flow data from the Colorado River before the construction of Glen Canyon Dam. 
+
+# Preliminaries  
+
+* Open RStudio  
+
+  * Make sure you are in your `ENVS433` project (look in the top right area of RStudio)  
+  
+* Make sure you have a folder called `data` in your project and that you have the `pre_data.csv` file in your `data` folder.  
+
+* load the packages you need by running the following code:  
+
+```{r, eval=FALSE}
+library(tidyverse)
+library(RcppRoll)
+```
+
+## Load the data into R  
+
+If you have the correct file in your `data` folder, you can load it into R using the following command:
+```{r, eval=FALSE}
+pre <- read_csv("data/pre_data.csv")
+```
+
+* Check that the data was loaded correctly. 
+
+```{r}
+pre
+# names of columns
+names(pre)
+```
+
+  
+## RVA calculations
+
+### Group 2  
+* Minimum and maximum flow values across different timeframe "windows"  
+
+  * Need to calculate min/max within a year first, and then average those values across years  
+  * end up with a single value for each metric  
+  
+* We will only be calculating RVA for the min and max values from the 1-, 3-, and 7-day windows from group 2. 
+
+
+## Calculations  
+
+### Calculations Group 2  
+
+We have already learned how to calculate these metrics in the IHA tutorial. Now, we will expand upon that by calculating variation in these metrics. We will keep it simple and just calculate 1 standard deviation (SD). 
+
+#### 1-day values  
+
+As a reminder, the following code will calculate the 1-day values and store it in an object called `pre_g2_1d`  
+
+```{r}
+pre_g2_1d <- pre %>%
+  group_by(y) %>%
+  summarise(min_1 = min(cfs), 
+            max_1 = max(cfs)) %>%
+  summarise(m_min_1 = mean(min_1), 
+            m_max_1 = mean(max_1))
+```
+We can modify this code slighty to also calculate the SD for the min and max values. 
+
+```{r}
+pre_g2_1d_sd <- pre %>%
+  group_by(y) %>%
+  summarise(min_1 = min(cfs), 
+            max_1 = max(cfs)) %>%
+  summarise(m_min_1 = mean(min_1),
+            sd_min_1 = sd(min_1),
+            m_max_1 = mean(max_1),
+            sd_max_1 = sd(max_1))
+
+pre_g2_1d_sd
+```
+* We now have a new data object called `pre_g2_1d_sd` which has the mean and sd for our 1-day minimum and maximum values. 
+
+* use the `mutate()` function to add and subtract 1 SD from the mean  
+
+* first, use `pivot_longer()` to change the data structure and make it easier to calculate  
+
+```{r}
+pre_g2_1d_sd <- pre_g2_1d_sd %>%
+  # make the data frame "longer" 
+  # this gets a 2-column data frame with the values and the description
+  pivot_longer(cols = 1:4, names_to = "metric", values_to = "value") %>%
+  # next, we separate the description column (cols = 1) into multiple pieces
+  separate(col = 1, c("summary_stat", "range", "day-window")) %>%
+  # now, we make the data frame wider so that the mean and sd value are in adjacent columns
+  pivot_wider(id_cols = 2:3, names_from = 1) %>%
+  # finally we can calc the low and hi range of the interval by
+  # subtracting or adding the SD from the mean, respectively
+  mutate(low_sd = m - sd,
+         hi_sd = m+sd)
+
+pre_g2_1d_sd
+```
+You can now see that the RVA for the 1-day minimum is between 1566 and 3352 CFS, and for the 1- day maximum it is between 43869 and 99770 CFS. 
+
+#### 3-day values  
+
+* This code is copied from the IHA tutorial
+
+```{r}
+# 3-day min and max
+pre_g2_3d_sd <- pre %>%
+  group_by(y) %>%
+  reframe(mean_3 = roll_mean(cfs, n = 3)) %>%
+  group_by(y) %>%
+  summarise(min_3 = min(mean_3),
+            max_3 = max(mean_3)) %>%
+summarise(m_min_3 = mean(min_3),
+          sd_min_3 = sd(min_3),
+          m_max_3 = mean(max_3), 
+          sd_max_3 = sd(max_3))
+
+pre_g2_3d_sd
+```
+
+* re-format the data to calculate the interval range  
+
+* We can copy the code from the 1-day calculations above.  
+
+* **NOTE** that the only thing we need to change is the object to work with on the first line  
+
+```{r}
+pre_g2_3d_sd %>%
+  pivot_longer(cols = 1:4, names_to = "metric", values_to = "value") %>%
+  separate(1, c("summary_stat", "range", "day-window")) %>%
+  pivot_wider(2:3, names_from = 1) %>%
+  mutate(low_sd = m - sd,
+         hi_sd = m+sd)
+
+```
+
+#### 7-day values
+
+We can repeat the process for the 7-day values. 
+
+* calculations copied from the IHA tutorial, with the sd calculations added
+
+```{r}
+# 7-day min and max
+pre_g2_7d_sd <- pre %>%
+  group_by(y) %>%
+  reframe(mean_7 = roll_mean(cfs, n = 7)) %>%
+  group_by(y) %>%
+  summarise(min_7 = min(mean_7),
+            max_7 = max(mean_7)) %>%
+summarise(m_min_7 = mean(min_7),
+          sd_min_7 = sd(min_7),
+          m_max_7 = mean(max_7), 
+          sd_max_7 = sd(max_7))
+
+pre_g2_7d_sd
+```
+
+* and we can copy the code again from above, making sure to **CHANGE THE DATA OBJECT** in the first line. 
+
+```{r}
+pre_g2_7d_sd %>%
+  pivot_longer(cols = 1:4, names_to = "metric", values_to = "value") %>%
+  separate(1, c("summary_stat", "range", "day-window")) %>%
+  pivot_wider(2:3, names_from = 1) %>%
+  mutate(low_sd = m - sd,
+         hi_sd = m+sd)
+
+```
+
+
+
+
+### Plotting the RVA and CFS values
+
+
+Recall the plot we made for the full pre-data set:
+
+```{r}
+ggplot(pre, 
+       aes(x = date, 
+           y = cfs)) +
+  geom_line() +
+  theme_bw() +
+  labs(title = "Mean Daily CFS values at Lee's Ferry, 1930-1939",
+       y = "cubic feet per second")
+```
+
+#### Add reference lines 
+
+### 1-day minimums  
+
+Above, we showed that the RVA for the 1-day minimums was between 1566 and 3352 CFS. 
+
+* manually add lines at these values  
+
+* we can change the color and linetype for visualization  
+
+  * Google "ggplot2 line colors" and "ggplot2 line types" for options
+
+```{r}
+# original plot copied from above
+ggplot(pre, 
+       aes(x = date, 
+           y = cfs)) +
+  geom_line() +
+  theme_bw() +
+  labs(title = "Mean Daily CFS values at Lee's Ferry, 1930-1939",
+       y = "cubic feet per second") +
+  # add another argument for the lower value
+  geom_hline(yintercept = 1566) +
+  # add another line for the upper range of the interval
+  # change color and linetype for visualization
+  geom_hline(yintercept = 3352,
+             color = "red", 
+             linetype = "dashed")
+```
+
+
+
+* finally, we can "zoom" the plot to see the area we are interested in  
+
+* Note I'm also adding a caption to avoid confusion
+
+```{r}
+# "Zoomed" plot
+ggplot(pre, 
+       aes(x = date, 
+           y = cfs)) +
+  geom_line() +
+  theme_bw() +
+  
+  labs(title = "Mean Daily CFS values at Lee's Ferry, 1930-1939",
+       y = "cubic feet per second",
+       caption = "The RVA for 1-day minimums is shown with a black horizontal line (mean - sd) and a red dashed line (mean + sd)") +
+  geom_hline(yintercept = 1566) +
+  geom_hline(yintercept = 3352,
+             color = "red", 
+             linetype = "dashed") +
+  # set the y-range
+  # make sure to go a little above and below your high and low values, respectively
+  coord_cartesian(ylim = c(1500, 3400))
+```
+
+We can see that before the dam was closed, the annual low flows were mostly in the range we calculated before. There were a few low flow events which were below this value around late 1934, and possibly again in ~1937. 
+
+### 1-day maximums  
+
+* here is the full plot for the 1-day maximums.  
+
+* note that I have changed the arguments within the `yintercept` and `ylim = c()` arguments to match what was calculated above.  
+
+* I have also changed the caption to communicate the 1-day **MAXIMUM** values  
+
+* when you do this for the 3- and 7-day values, it is **CRITICAL** to change the values appropriately.  
+
+* I **will** subtract points from your assignment if the values and caption/title are incorrect.  
+
+```{r}
+# "Zoomed" plot
+ggplot(pre, 
+       aes(x = date, 
+           y = cfs)) +
+  geom_line() +
+  theme_bw() +
+  
+  labs(title = "Mean Daily CFS values at Lee's Ferry, 1930-1939",
+       y = "cubic feet per second",
+       caption = "The RVA for 1-day maximums is shown with a black horizontal line (mean - sd) and a red dashed line (mean + sd)") +
+  geom_hline(yintercept = 43869) +
+  geom_hline(yintercept = 99770,
+             color = "red", 
+             linetype = "dashed") +
+  # set the y-range
+  # make sure to go a little above and below your high and low values, respectively
+  coord_cartesian(ylim = c(43800, 99800))
+```
+
+Once again, we can see that most (~8/10 years)  were within or above the range of 1-day maximum values calculated above. This makes sense, since we are plotting the pre-data, and the flow of the Colorado river at this time was relatively unaffected. 
+
+* repeating the plot above, with a slighty bigger zoom window to see high flows ffrom each year  
+
+```{r}
+# "Zoomed" plot
+ggplot(pre, 
+       aes(x = date, 
+           y = cfs)) +
+  geom_line() +
+  theme_bw() +
+  
+  labs(title = "Mean Daily CFS values at Lee's Ferry, 1930-1939",
+       y = "cubic feet per second",
+       caption = "The RVA for 1-day maximums is shown with a black horizontal line (mean - sd) and a red dashed line (mean + sd)") +
+  geom_hline(yintercept = 43869) +
+  geom_hline(yintercept = 99770,
+             color = "red", 
+             linetype = "dashed") +
+  # set the y-range
+  # make sure to go a little above and below your high and low values, respectively
+  coord_cartesian(ylim = c(25000, 99800))
+```
+We can now start to get an idea of what years did not have flows within the RVA. For example, it looks like 1931, 1934 and 1940 were low-flow years. 
+
+* also show how to export graph  
+
+* `ggsave()` function  
+
+  * make sure you know where to find it  
+  
+* plot pane in Rstudio  
+
+  * "export", "save as image"  
+
+
+# Moving forward  
+
+You now have the code to calculate the RVA for the 1-day values. You can copy and modify this code to calculate the RVA for the 3- and 7-day values. 
+
+Likewise, you have the code to plot flow data and add reference lines showing the RVA for the different metrics. 
+
+For the assignment, you will need to plot the experimental flow data (`high-flow-2023.csv` and `bug_flows.csv`) and then add your RVA calculations manually. 
+
+### NOTES  
+
+* You will only need to use the maximum value for the `high-flow-2023.csv` data  
+
+  * you should have three plots, one each for the 1-, 3-, and 7-day maximum RVA.  
+  
+* You will only need to use the maximum value for the `bug_flows.csv` data  
+
+  * You will also need to make three plots  
+  
+* Once you have your plots, you will need to comment on whether or not the experimental flows were with the RVA's you calculated  
+
+  * you may need to adjust your "zoom" windows (i.e. the values in `ylim = c()`) in order to see the RVA and the empirical, observed flow values.  
+  

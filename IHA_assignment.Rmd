@@ -63,6 +63,21 @@ You will be responsible for making these calculations on the post-data on your o
 
 In the last few years, there have been experimental high- and low-flow releases from Glen Canyon Dam to investigate whether or not these flows had ecological benefits. You can read more about the [experimental flood in 2023](https://www.nps.gov/grca/learn/nature/hfe-23.htm), as well as the [experimental low, Bug-flows in 2020](https://www.usbr.gov/newsroom/newsroomold/newsrelease/detail.cfm?RecordID=70708). Daily mean flow data for both of these experiments are available on D2L as `high-flow-2023.csv` and `bug_flows.csv`. 
 
+You will need to plot the observed flow data from the experimental flows and compare it to the RVA's you calculated. You will also need to discuss how the observed flows compare with the RVA. i.e., was the experimental high flow in the RVA for the 1-day maximums, or was it below or above that range?
+
+## Assignment submission  
+
+### R scripts  
+You will need to submit all R scripts used to calculate the IHA and RVA and to plot the RVA vs. experimental flows. 
+
+### Writeup  
+
+Your writeup should consist of two main parts  
+1. Compare the flow regime pre- and post-dam. Use the Deviation Magnitude and per cent deviation methods to quantify these changes. What parts of the flow regime have changed? In what way? i.e., high flows higher magnitude, longer duration, shifting time throughout the year? What parts of the flow regime are the same? i.e., are low or base flows the same magnitude and timing, but a different duration? 
+2. Compare the historical RVA with the experimental flows. Are the experimental flows within the correct range of historical variation? Why or why not? If they are not in the right RVA, what benefits (if any) do you think these experimental flows perform? What reccomendations would you make for future experimental high and low flows?  
+
+
+
 ## Data sources  
 
 The data provided for this assignment was downloaded from the USGS website, gauge number 09380000. The downloaded data were curated, cleaned and modified. 

@@ -1,0 +1,11 @@
+metric,day-window,mean,time_frame
+min,1,2459,pre_dam
+max,1,71820,pre_dam
+min,3,2623.333333333333,pre_dam
+max,3,70206.66666666667,pre_dam
+min,7,2831.714285714286,pre_dam
+max,7,66714.28571428571,pre_dam
+min,30,3711,pre_dam
+max,30,55093,pre_dam
+min,90,5432.922222222222,pre_dam
+max,90,37459,pre_dam

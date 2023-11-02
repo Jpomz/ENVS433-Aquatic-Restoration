@@ -221,8 +221,10 @@ library(RcppRoll)</code></pre>
 names(pre)</code></pre>
 <pre><code>## [1] &quot;date&quot;             &quot;cfs&quot;              &quot;y&quot;                &quot;m&quot;               
 ## [5] &quot;d&quot;                &quot;j_date&quot;           &quot;consecutive_date&quot;</code></pre>
-<p><strong>Troubleshooting</strong><br />
-* Make sure your folder and file names exactly match what’s written above.</p>
+<p><strong>Troubleshooting</strong></p>
+<ul>
+<li>Make sure your folder and file names exactly match what’s written above.</li>
+</ul>
 <div id="data-description" class="section level3">
 <h3>Data description</h3>
 <ul>
@@ -569,7 +571,7 @@ pre_g2_90d</code></pre>
 </ul></li>
 </ul>
 <pre class="r"><code># combine all the columns of results for the 5 windows into one object
-bind_cols(pre_g2_1d,
+pre_g2_all &lt;- bind_cols(pre_g2_1d,
           pre_g2_3d,
           pre_g2_7d,
           pre_g2_30d,
@@ -580,9 +582,30 @@ bind_cols(pre_g2_1d,
   separate(metric, c(&quot;drop&quot;, &quot;metric&quot;, &quot;day-window&quot;)) %&gt;%
   # remove the &quot;drop&quot; column (it&#39;s unneeded)
   select(!drop) %&gt;%
+  # add a column stating which timeframe (pre_ or post_dam) this data is from
+  mutate(time_frame = &quot;pre_dam&quot;) 
+
+# print out the new object to see what it looks like
+pre_g2_all</code></pre>
+<pre><code>## # A tibble: 10 x 4
+##    metric `day-window`   mean time_frame
+##    &lt;chr&gt;  &lt;chr&gt;         &lt;dbl&gt; &lt;chr&gt;     
+##  1 min    1             2459  pre_dam   
+##  2 max    1            71820  pre_dam   
+##  3 min    3             2623. pre_dam   
+##  4 max    3            70207. pre_dam   
+##  5 min    7             2832. pre_dam   
+##  6 max    7            66714. pre_dam   
+##  7 min    30            3711  pre_dam   
+##  8 max    30           55093  pre_dam   
+##  9 min    90            5433. pre_dam   
+## 10 max    90           37459  pre_dam</code></pre>
+<pre class="r"><code># write this object as a csv
+# this allows you to open it in excel
+pre_g2_all %&gt;%
   # save the results as a csv
-  # the file &quot;g2-metrics.csv&quot; should appear in your RStudio folder after you run this code  
-  write_csv(&quot;g2-metrics.csv&quot;)</code></pre>
+  # the file &quot;g2-metrics.csv&quot; should appear in your &quot;data&quot; folder in your RStudio project folder after you run this code  
+  write_csv(&quot;data/g2-metrics-pre.csv&quot;)</code></pre>
 </div>
 <div id="calculations-group-3" class="section level3">
 <h3>Calculations Group 3</h3>
@@ -653,7 +676,50 @@ pre_max_julian</code></pre>
 <h1>Moving forward</h1>
 <div id="complete-part-1" class="section level3">
 <h3>Complete part 1</h3>
-<p>You now have all the IHA group 1-3 metrics calculated for the pre-dam data. You will need to start a new script and repeat these calculations for the post-dam data. Make sure to make a plot of the flow values for the post-dam timeframe, as well as calculate all IHA metrics in groups 1-3. You will then need to compare the value for pre-and post data and summarize the changes to hydrology following the dame closure.</p>
+<p>You now have all the IHA group 1-3 metrics calculated for the pre-dam data. You will need to start a new script and repeat these calculations for the post-dam data. Make sure to make a plot of the flow values for the post-dam timeframe, as well as calculate all IHA metrics in groups 1-3.</p>
+<p>You will then need to compare the value for pre-and post data and summarize the changes to hydrology following the dam closure.</p>
+<p>To compare, you will calculate the deviation magnitude, and the % deviation.</p>
+<p><span class="math display">\[\text{DM} = \text{post} - \text{pre} ~~~ \small{Equation~1}\]</span> Where <span class="math inline">\(DM\)</span> is the deviation magnitude, and <span class="math inline">\(pre\)</span> and <span class="math inline">\(post\)</span> are the values for a given metric calculated before and after dam closure, respectively.</p>
+<p><span class="math display">\[ \%D =  \frac{\text{DM}} {\text{pre}} ~~~ \small{Equation~2}\]</span></p>
+<p>Where <span class="math inline">\(\%D\)</span> is the per cent deviation, <span class="math inline">\(DM\)</span> is the deviation magnitude calculated in equation 1, and <span class="math inline">\(pre\)</span> is the value for a given metric calculated before dam closure.</p>
+<p>The following code is an example of how to calculate these two metrics using simple values:</p>
+<pre class="r"><code>pre_value &lt;- 1250
+post_value &lt;- 555
+
+# deviation magnitude: pre_value - post_value
+dev_mag &lt;- post_value - pre_value
+dev_mag</code></pre>
+<pre><code>## [1] -695</code></pre>
+<pre class="r"><code># % deviation: dev_mag / pre_value
+(dev_mag / pre_value) * 100</code></pre>
+<pre><code>## [1] -55.6</code></pre>
+<p>You can also calculate these using vectorized functions. For example, see below using the 1 day min/max values from the pre-dam data set, and a hypothetical result for the post dam data</p>
+<pre class="r"><code># example data set
+# for your assignment, you should calculate this for the post-dam
+# data set as we did above in the tutorial
+post_g2_1d &lt;- tibble(m_min_1 = 8000, m_max_1 = 30000)
+# print out example data set
+post_g2_1d</code></pre>
+<pre><code>## # A tibble: 1 x 2
+##   m_min_1 m_max_1
+##     &lt;dbl&gt;   &lt;dbl&gt;
+## 1    8000   30000</code></pre>
+<pre class="r"><code># should have the same format / look similar to 
+#pre-data we calculated above
+pre_g2_1d</code></pre>
+<pre><code>## # A tibble: 1 x 2
+##   m_min_1 m_max_1
+##     &lt;dbl&gt;   &lt;dbl&gt;
+## 1    2459   71820</code></pre>
+<pre class="r"><code># deviation magnitude
+dm_1d = post_g2_1d - pre_g2_1d
+dm_1d</code></pre>
+<pre><code>##   m_min_1 m_max_1
+## 1    5541  -41820</code></pre>
+<pre class="r"><code># deviation percent
+(dm_1d / pre_g2_1d) * 100</code></pre>
+<pre><code>##    m_min_1   m_max_1
+## 1 225.3355 -58.22891</code></pre>
 </div>
 <div id="part-2" class="section level3">
 <h3>Part 2</h3>
