@@ -1,0 +1,153 @@
+---
+title: "Plotting_RVA_tutorial"
+author: "Justin Pomeranz"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(RcppRoll)
+pre <- read_csv(here::here("data/IHA/pre_data.csv"))
+bugs <- read_csv(here::here("data/IHA/bug_flows.csv"))
+```
+
+# Overview  
+
+This tutorial will show you how to plot the range of variability approach (RVA) for the minimum 1-day flow and compare it with an experimental low flow from Glen Canyon Dam. 
+
+# Preliminaries  
+
+* Open RStudio  
+
+  * Make sure you are in your `ENVS433` project (look in the top right area of RStudio)  
+  
+* Make sure you have a folder called `data` in your project and that the `pre_data.csv` file is in that folder.  
+
+* load the packages you need by running the following code:
+```{r, eval=FALSE}
+library(tidyverse)
+library(RcppRoll)
+```
+
+  * If there was an error, make sure you have the `tidyverse` and `RcppRoll` packages downloaded onto your machine  
+  
+  * Remember you only need to install the packages once per machine, but you need to load them using the `library()` command every time you open RStudio.  
+  
+  * If needed, you can install the packages by running the following code: `install.packages("tidyverse")`, and `install.packages("RcppRoll")`, respectively. Make sure to re-run the `library()` commands above if needed.  
+  
+  
+## Load the data into R  
+
+If you have the correct file in your `data` folder, you can load it into R using the following command:
+```{r, eval=FALSE}
+pre <- read_csv("data/pre_data.csv")
+bugs <- read_csv("data/bug_flows.csv")
+```
+
+* Check that the data was loaded correctly.  
+
+
+# need to fix date in bugs data
+
+1,565 and 3,352 CFS
+```{r}
+bugs %>%
+  ggplot(aes(x = date, 
+             y = cfs)) +
+  geom_line()
+```
+
+Note that the low-flows in May-June were above 10,000 CFS, and once the experiment began the low-flows were ~9,000 cfs (at least at first). 
+
+### Group 2  
+
+* We will only be looking at the 1-day minimums in this tutorial.  
+
+
+#### 1-day values  
+
+Recall that the RVA for the 1-day minimums was calculated as follows: 
+
+```{r}
+pre %>%
+  group_by(y) %>%
+  summarise(min_1 = min(cfs)) %>%
+  summarise(m_min_1 = mean(min_1), 
+            # add sd() command here
+            sd_min_1 = sd(min_1)) %>%
+  pivot_longer(1:2, 
+               names_to = "metric", 
+               values_to = "value") %>%
+  separate(1, c("stat", "metric", "day_window")) %>%
+  pivot_wider(names_from = stat) %>%
+  mutate(rva_low = m - sd,
+         rva_high = m + sd) %>%
+  select(metric, rva_low, rva_high)
+```
+
+This means that the RVA interval for the 1-day minimum flow is between 1,565 and 3,352 CFS. 
+
+We can now add reference lines to our original plot, and compare the RVA with what was actually observed. 
+
+```{r}
+bugs %>%
+  ggplot(aes(x = date, 
+             y = cfs)) +
+  geom_line() +
+  geom_hline(aes(yintercept = 1565), 
+               linetype = "dashed") + # low interval
+    geom_hline(aes(yintercept = 3352), 
+               linetype = "dashed") 
+```
+
+Here, we can see that the experimental low flows were much higher than the RVA for the 1-day low flows. 
+
+
+### Hypothetical result  
+
+Just for comparison, and so you know what it looks like when our experimental flows *are* within the recommended RVA, here's the plot of a hypothetical result. I'm also changing the `linetype` for illustrative purposes. 
+
+```{r}
+bugs %>%
+  ggplot(aes(x = date, 
+             y = cfs)) +
+  geom_line() +
+  geom_hline(aes(yintercept = 8000), 
+               linetype = "twodash") + # low interval
+    geom_hline(aes(yintercept = 9500), 
+               linetype = "twodash") 
+```
+Here, we can see that the first four low flows fall within the interval. It looks like the 5th-7th low flow also falls within the region, although we may need to "zoom in" to tell for sure.  
+
+#### "Zooming in"
+
+```{r}
+bugs %>%
+  ggplot(aes(x = date, 
+             y = cfs)) +
+  geom_line() +
+  geom_hline(aes(yintercept = 8000), 
+               linetype = "twodash") + # low interval
+    geom_hline(aes(yintercept = 9500), 
+               linetype = "twodash") +
+  coord_cartesian(ylim = c(8000, 10000))
+```
+It does appear that the 1st to 7th low-flows do fall within the RVA interval. 
+
+# Moving forward    
+
+## Complete part 4  
+
+### Minimum flows with `bugs` data  
+
+You will need to modify the code above to plot the RVA for the minimum flow in the 3- and 7-day windows. 
+
+
+### Maximum flows with `high-flow-2023.csv` data  
+
+You will need to modify the code above to plot the RVA for the minimum flow in the 1-, 3-, and 7-day windows. Instead of using the same `bugs` data as above, you will need to compare it to the `high-flow-2023.csv`, which you can download from D2L. 
+
+
+
+

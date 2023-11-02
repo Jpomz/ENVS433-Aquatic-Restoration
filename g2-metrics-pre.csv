@@ -1,4 +1,4 @@
-metric,day-window,mean,time_frame
+metric,day-window,mean_cfs,time_frame
 min,1,2459,pre_dam
 max,1,71820,pre_dam
 min,3,2623.333333333333,pre_dam

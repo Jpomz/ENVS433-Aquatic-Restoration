@@ -1,7 +1,6 @@
 ---
 title: "IHA-assignment"
 author: "Justin Pomeranz"
-date: "7/14/2023"
 output: html_document
 ---
 
@@ -13,13 +12,13 @@ library(RcppRoll)
 
 # Overview  
 
-This assignment will explore how river regulation alters the natural flow regime. You will use real data from the Colorado River at Lee's Ferry before and after Glen Canyon dam was built. 
+This assignment will use the IHA method to explore and quantify how river regulation alters the natural flow regime. You will use real data from the Colorado River at Lee's Ferry before and after Glen Canyon dam was built. 
 
 # Introduction  
 
 Rivers are subjected to variation in flow conditions across time. Within a given year, they can be characterized by a natural flow regime (Poff et al. 1990), with predictable and consistent periods of high and low flow conditions. 
 
-Dams are built on rivers around the world for numerous reasons including water storage, flood control, and hydropower operations, all of which can alter the natural flow regime. 
+Dams are built on rivers around the world for numerous reasons including water storage for municipal and agricultural uses, flood control, and hydropower operations, all of which can alter the natural flow regime. 
 
 ## Glen Canyon Dam  
 
@@ -41,23 +40,34 @@ df %>%
   labs(caption = str_wrap("Figure 1. Flow data in cubic feet per second (cfs) for Lee's Ferry below Glen Canyon Dam. Note the extremely low flows beginning in the mid 1960's when the dam was closed, and reduced variabiliaty after ~ 1980 when the reservoir was full."))
 ```
 
-The closing of Glen Canyon Dam dramatically altered the flow at Lee's Ferry, as seen in figure 1. Qualitatively, we can see much higher variation in the magnitudes of high- and low-flows. 
+The closing of Glen Canyon Dam dramatically altered the flow at Lee's Ferry, as seen in figure 1. Qualitatively, we can see much higher variation in the magnitudes of high- and low-flows before the dam closed. Immediately afterwards, the flows decline while the reservoir was filled. After it filled (~80's), the flows became much more stable and consistent, with higher base flows and lower peak flows. 
+
+However, we can go beyond qualitative statements and use the IHA to qunatify the changes to the flow regime. 
 
 # Assignment  
 
 This assignment will be completed in groups of 2-3 and has four main parts:  
 1. Calculate IHA metrics (groups 1 - 3, Richter et al. 1996) For Lee's ferry before and after the dam was closed.  
+
+  * This is a total of 48 values  
+  
+  * 12 monthly means, + 10 min/max values across different time windows,  + 2 Julian dates = 24 metrics, * 2 timeframes (before/after dam) = 48 values.   
+  
 2. Use the Range of Variability Approach (RVA, Richter et al. 1997) for selected metrics from group 2 to make management recommendations for Glen Canyon Dam operations.  
+
+  * RVA for only the 1-, 3-, and 7-day windows in Group 2.  
+  
 3. Compare your recommendations with flow conditions from experimental high flows in 2023, and experimental low-flows in 2020.  
+
 4. You will write up your analysis to summarize and discuss points 1-3.  
 
 ## Quantifying the IHA and RVA  
 
 In this assignment, you will calculate IHA groups 1-3 for both pre- (1930-1939) and post-dam closure data (1990-1999). 
 
-The data are available on D2L (`pre_data.csv` and `post_data.csv`, respectively). A tutorial is also available on D2L (**IHA and RVA tutorial**) explaining how to calculate the IHA metrics for the pre-data as well as the RVA approach (points 1 and 2 above). We will also go over this tutorial in class. 
+The data are available on D2L (`pre_data.csv` and `post_data.csv`, respectively). Tutorials are available on D2L explaining how to calculate the IHA metrics (**IHA tutorial**) for the pre-data as well as the RVA approach (**RVA tutorial**; points 1 and 2 above). A third tutorial (**Plotting the RVA**) Is also available for point 3 above. We will go over these tutorials in class. 
 
-You will be responsible for making these calculations on the post-data on your own. 
+**You will be responsible for making the post-data calculations on your own. **
 
 ## Comparing with experimental flows  
 
@@ -73,9 +83,10 @@ You will need to submit all R scripts used to calculate the IHA and RVA and to p
 ### Writeup  
 
 Your writeup should consist of two main parts  
-1. Compare the flow regime pre- and post-dam. Use the Deviation Magnitude and per cent deviation methods to quantify these changes. What parts of the flow regime have changed? In what way? i.e., high flows higher magnitude, longer duration, shifting time throughout the year? What parts of the flow regime are the same? i.e., are low or base flows the same magnitude and timing, but a different duration? 
-2. Compare the historical RVA with the experimental flows. Are the experimental flows within the correct range of historical variation? Why or why not? If they are not in the right RVA, what benefits (if any) do you think these experimental flows perform? What reccomendations would you make for future experimental high and low flows?  
 
+1. Compare the flow regime pre- and post-dam. Use the Deviation Magnitude and per cent deviation methods to quantify these changes. What parts of the flow regime have changed? In what way? i.e., high flows higher magnitude, longer duration, shifting time throughout the year? What parts of the flow regime are the same? i.e., are low or base flows the same magnitude and timing, but a different duration?  
+
+2. Compare the historical RVA with the experimental flows. Are the experimental flows within the correct range of historical variation? Why or why not? If they are not in the right RVA, what benefits (if any) do you think these experimental flows perform? What reccomendations would you make for future experimental high and low flows?  
 
 
 ## Data sources  

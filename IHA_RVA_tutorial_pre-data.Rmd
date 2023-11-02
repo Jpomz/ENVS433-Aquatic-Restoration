@@ -1,0 +1,204 @@
+---
+title: "RVA_tutorial"
+author: "Justin Pomeranz"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(RcppRoll)
+pre <- read_csv(here::here("data/IHA/pre_data.csv"))
+```
+
+# Overview  
+
+This tutorial will show you how to calculate the range of variability approach (RVA) for a subset of the IHA group 2  metrics. This tutorial will use flow data from the Colorado River before the construction of Glen Canyon Dam. 
+
+# Preliminaries  
+
+* Open RStudio  
+
+  * Make sure you are in your `ENVS433` project (look in the top right area of RStudio)  
+  
+* Make sure you have a folder called `data` in your project and that the `pre_data.csv` file is in that folder.  
+
+* load the packages you need by running the following code:
+```{r, eval=FALSE}
+library(tidyverse)
+library(RcppRoll)
+```
+
+  * If there was an error, make sure you have the `tidyverse` and `RcppRoll` packages downloaded onto your machine  
+  
+  * Remember you only need to install the packages once per machine, but you need to load them using the `library()` command every time you open RStudio.  
+  
+  * If needed, you can install the packages by running the following code: `install.packages("tidyverse")`, and `install.packages("RcppRoll")`, respectively. Make sure to re-run the `library()` commands above if needed.  
+  
+  
+## Load the data into R  
+
+If you have the correct file in your `data` folder, you can load it into R using the following command:
+```{r, eval=FALSE}
+pre <- read_csv("data/pre_data.csv")
+```
+
+* Check that the data was loaded correctly. 
+
+```{r}
+# print out first few rows of data
+head(pre)
+# names of columns
+names(pre)
+```
+
+  
+**Troubleshooting**  
+
+* Make sure your folder and file names exactly match what's written above.  
+
+
+### Data description  
+
+* `date` = the date of the observation  
+* `cfs` = the mean flow observed on that date, in cubic feet per second (cfs)  
+* `y` = the year of the observation (useful for grouping data later)  
+* `m` = the month of the observation (useful for grouping data later)  
+* `d` = is the day of the observation  
+* `j_date` = the Julian day of the year for the observation, where 1 = January 1st, and 365 = December 31st (except on leap years, when December 31st = 366)  
+* `consecutive_date` = sequential number identifying every single observation in the data set (1 to 3652)  
+
+### Preview data  
+
+## IHA Group 2 Metrics 
+
+A full description of the metrics can be found in the IHA_tutorial document on D2L. 
+
+### Group 2  
+
+* We will only be looking at the 1-, 3-, and 7-day windows for this part of the assignment. 
+  
+## Calculations  
+
+In the previous tutorial, we calculated the averages for the metrics. In this part, we will also calculate the standard deviations. We will end by organizing the data in a way that makes it easier to perform the RVA for the assignment. 
+
+The tutorial will show the full calculation for the 1- and 3-day metrics. You will need to copy and modify the code to perform the calculations for the 7-day window.
+
+
+#### 1-day values  
+
+This is the simplest metric, where we will find the min/max value for each year, and then average those values across years. 
+
+* take `pre` data and "group" it by year  
+* calculate the min/max flow value for each year  
+* average those min/max values across years  
+
+```{r}
+# This code is copied from the first tutorial
+
+pre %>%
+  group_by(y) %>%
+  summarise(min_1 = min(cfs),
+            max_1 = max(cfs)) %>%
+  summarise(m_min_1 = mean(min_1), 
+            m_max_1 = mean(max_1))
+```
+
+* This calculates the average 1-day minimum and maximum values.  
+
+* We can also calculate the standard deviations by adding extra lines of code inside of the second `summarise()` command  
+
+
+```{r}
+pre_1_sd <- pre %>%
+  group_by(y) %>%
+  summarise(min_1 = min(cfs), 
+            max_1 = max(cfs)) %>%
+  summarise(m_min_1 = mean(min_1), 
+            # add sd() command here
+            sd_min_1 = sd(min_1),
+            m_max_1 = mean(max_1),
+            # add another sd() command here
+            sd_max_1 = sd(max_1))
+
+# print out the result
+pre_1_sd
+
+```
+
+We can now see that we have the mean (`m_...`) and sd (`sd_...`) for the 1-day metric. We will reorganize the data so that the values for the min and max are on separate rows, and the mean and sd are still next to each other. 
+
+```{r}
+pre_1_sd <- pre_1_sd %>%
+  pivot_longer(1:4, 
+               names_to = "metric", 
+               values_to = "value") %>%
+  separate(1, c("stat", "metric", "day_window")) %>%
+  pivot_wider(names_from = stat)
+
+pre_1_sd
+```
+
+Now, we can simply add two new columns with the lower and upper range of the RVA interval using the `mutate()` function. 
+
+```{r}
+pre_1_sd %>%
+  mutate(rva_low = m - sd,
+         rva_high = m + sd)
+```
+
+This means that the RVA interval for the 1-day minimum flow is between 1,565 and 3,352 CFS, and the interval for the 1-day maximum is between 27,950 and 99,770 CFS. 
+
+You can now use those values to compare with the post-dam data. For example, let's say that you find the mean 1-day minimum in the post-data is equal to 2000 CFS. Since this is inside the interval calculated above, we can conclude that the post-dam flows are reasonable compared to the pre-data. However, if you find that the post-dam 1-day flow minimums are 500 or 5,000 CFS, this falls outside the pre-dam data and we would conclude that the flow regime is different than it was pre-dam. 
+
+
+#### 3-day values
+
+The following code calculates the mean and sd for the 3-day windows. 
+```{r}
+pre_3_sd <- pre %>%
+  group_by(y) %>%
+  reframe(mean_3 = roll_mean(cfs, n = 3)) %>%
+  group_by(y) %>%
+  summarise(min_3 = min(mean_3),
+            max_3 = max(mean_3)) %>%
+summarise(m_min_3 = mean(min_3),
+          sd_min_3 = sd(min_3),
+          m_max_3 = mean(max_3),
+          sd_max_3 = sd(max_3))
+
+pre_3_sd
+```
+
+Once again, we will reorganize the data to make the calculations easier:
+
+```{r}
+pre_3_sd <- pre_3_sd %>%
+  pivot_longer(1:4, 
+               names_to = "metric", 
+               values_to = "value") %>%
+  separate(1, c("stat", "metric", "day_window")) %>%
+  pivot_wider(names_from = stat)
+
+pre_3_sd
+```
+
+Finally, we can calculate the RVA interval by adding/subtracting the SD from the mean value
+
+```{r}
+pre_3_sd %>%
+  mutate(rva_low = m - sd,
+         rva_high = m + sd)
+```
+
+# Moving forward    
+
+### Complete part 2  
+
+You will need to modify the code above to calculate the RVA for the 7-day window. 
+
+### Part 3  
+
+You will compare the observed values from the experimental high and low flows and see if they fall within the intervals you calculated here. 
+
+There is a final tutorial on D2L explaining how to plot the observed values from the experimental flows along with your RVA interval. 
