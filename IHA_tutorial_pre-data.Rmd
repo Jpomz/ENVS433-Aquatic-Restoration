@@ -437,7 +437,7 @@ To compare, you will calculate the deviation magnitude, and the % deviation.
 $$\text{DM} = \text{post} - \text{pre} ~~~ \small{Equation~1}$$
 Where $DM$ is the deviation magnitude, and $pre$ and $post$ are the values for a given metric calculated before and after dam closure, respectively. 
 
-$$ \%D =  \frac{\text{DM}} {\text{pre}} ~~~ \small{Equation~2}$$
+$$ \%D =  \frac{\text{DM}} {\text{pre}} * 100 ~~~ \small{Equation~2}$$
 
 Where $\%D$ is the per cent deviation, $DM$ is the deviation magnitude calculated in equation 1, and $pre$ is the value for a given metric calculated before dam closure.  
 

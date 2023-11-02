@@ -1,7 +1,6 @@
 ---
 title: "IHA_key"
 author: "Justin Pomeranz"
-date: '2023-07-13'
 output: html_document
 ---
 
@@ -10,6 +9,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(RcppRoll)
 post <- read_csv(here::here("data/IHA/post_data.csv"))
+source(here::here("iha_pre_source_for_key.R"))
 ```
 
 # Introduction  
@@ -120,7 +120,7 @@ post_g2_90d
 
 ```{r}
 # combine all the columns of results for the 5 windows into one object
-bind_cols(post_g2_1d,
+post_g2 <- bind_cols(post_g2_1d,
           post_g2_3d,
           post_g2_7d,
           post_g2_30d,
@@ -130,18 +130,6 @@ bind_cols(post_g2_1d,
   select(!drop) 
 ```
 
-```{r}
-bind_cols(post_g2_1d,
-          post_g2_3d,
-          post_g2_7d,
-          post_g2_30d,
-          post_g2_90d) %>%
-  pivot_longer(cols = starts_with("m_"), names_to = "metric", values_to = "mean") %>%
-  separate(metric, c("drop", "metric", "day-window")) %>%
-  select(!drop) %>%
-  mutate(time_frame = "post_dam") %>%
-  write_csv("g2-metrics-post.csv")
-```
 
 
 ### Group 3
@@ -167,12 +155,62 @@ post_max_julian <- post %>%
   filter(cfs == max(cfs)) %>%
   select(cfs, y, j_date) %>%
   ungroup() %>%
-  summarise(min_j_date = mean(j_date))
+  summarise(max_j_date = mean(j_date))
 
 post_max_julian
 ```
 
-# pick up here  
+# DM and %D  
 
-Need to read in results from pre-data and calc deviation mag / %
+## Group 1 DM
+```{r}
+# deviation magnitude
+g1_dm <- group1_post - group1_pre
+g1_dm
+```
+
+## Group 1 %D
+```{r}
+g1_pd <- g1_dm / group1_pre * 100
+g1_pd
+```
+
+## Group 2 DM
+```{r}
+# deviation magnitude
+g2_dm <- post_g2$mean - pre_g2$mean_cfs
+data.frame(metric = post_g2$metric,
+           "day_window" = post_g2$`day-window`,
+           dm = g2_dm)
+```
+
+## Group 2 %D
+```{r}
+g2_pd <- g2_dm / pre_g2$mean_cfs * 100
+data.frame(metric = post_g2$metric,
+           "day_window" = post_g2$`day-window`,
+           "percent_dm" = g2_pd)
+
+```
+
+## group 3 Min Julian DM
+```{r}
+g3_min_julian_dm <- post_min_julian - pre_min_julian
+g3_min_julian_dm
+```
+## group 3 Min Julian %D
+```{r}
+g3_min_julian_dm / pre_min_julian * 100
+```
+
+
+## group 3 Max Julian DM
+```{r}
+g3_max_julian_dm <- post_max_julian - pre_max_julian
+g3_max_julian_dm
+```
+## group 3 Max Julian %D
+```{r}
+g3_max_julian_dm / pre_max_julian * 100
+```
 
