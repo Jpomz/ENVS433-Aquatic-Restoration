@@ -427,7 +427,7 @@ re-run the <code>library()</code> commands above if needed.</p></li>
 <h2>Load the data into R</h2>
 <p>If you have the correct file in your <code>data</code> folder, you
 can load it into R using the following command:</p>
-<pre class="r"><code>pre &lt;- read_csv(&quot;data/pre_data.csv&quot;)</code></pre>
+<pre class="r"><code>pre &lt;- read_tsv(&quot;data/pre_data.tsv&quot;)</code></pre>
 <ul>
 <li>Check that the data was loaded correctly.</li>
 </ul>
@@ -972,8 +972,8 @@ deviation.</p>
 <p><span class="math display">\[\text{DM} = \text{post} - \text{pre} ~~~
 \small{Equation~1}\]</span> Where <span class="math inline">\(DM\)</span> is the deviation magnitude, and <span class="math inline">\(pre\)</span> and <span class="math inline">\(post\)</span> are the values for a given metric
 calculated before and after dam closure, respectively.</p>
-<p><span class="math display">\[ \%D =  \frac{\text{DM}} {\text{pre}}
-~~~ \small{Equation~2}\]</span></p>
+<p><span class="math display">\[ \%D =  \frac{\text{DM}} {\text{pre}} *
+100 ~~~ \small{Equation~2}\]</span></p>
 <p>Where <span class="math inline">\(\%D\)</span> is the per cent
 deviation, <span class="math inline">\(DM\)</span> is the deviation
 magnitude calculated in equation 1, and <span class="math inline">\(pre\)</span> is the value for a given metric
