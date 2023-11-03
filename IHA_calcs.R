@@ -5,7 +5,6 @@ library(RcppRoll)
 pre_data <- read_csv("data/IHA/CO-river-Lees_1930-1941.csv")
 post_data <- read_csv("data/IHA/CO-river-Lees_1990-2000.csv")
 
-
 # pre-data wrangling -----------------------------------------------
 
 
@@ -29,6 +28,7 @@ pre_data %>%
   reframe(sum(n))
 
 write_csv(pre_data, "data/IHA/pre_data.csv")
+write_tsv(pre_data, "data/IHA/pre_data.tsv")
 
 # Post-data wrangling -----------------------------------------------------
 
@@ -50,7 +50,7 @@ post_data %>%
   reframe(sum(n))
 
 write_csv(post_data, "data/IHA/post_data.csv")
-
+write_tsv(post_data, "data/IHA/post_data.tsv")
 
 # pre-data IHA ------------------------------------------------------------
 

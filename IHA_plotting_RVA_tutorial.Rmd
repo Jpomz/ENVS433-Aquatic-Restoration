@@ -8,8 +8,8 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(RcppRoll)
-pre <- read_csv(here::here("data/IHA/pre_data.csv"))
-bugs <- read_csv(here::here("data/IHA/bug_flows.csv"))
+pre <- read_tsv(here::here("data/IHA/pre_data.tsv"))
+bugs <- read_tsv(here::here("data/IHA/bug_flows.tsv"))
 ```
 
 # Overview  
@@ -41,8 +41,8 @@ library(RcppRoll)
 
 If you have the correct file in your `data` folder, you can load it into R using the following command:
 ```{r, eval=FALSE}
-pre <- read_csv("data/pre_data.csv")
-bugs <- read_csv("data/bug_flows.csv")
+pre <- read_tsv("data/pre_data.tsv")
+bugs <- read_tsv("data/bug_flows.tsv")
 ```
 
 * Check that the data was loaded correctly.  
