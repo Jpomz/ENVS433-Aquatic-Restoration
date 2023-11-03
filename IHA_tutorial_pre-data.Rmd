@@ -340,14 +340,25 @@ pre_g2 <- bind_cols(pre_g2_1d,
   # remove the "drop" column (it's unneeded)
   select(!drop) %>%
   # add a column stating which timeframe (pre_ or post_dam) this data is from
-  mutate(time_frame = "pre_dam")
+  mutate(time_frame = "pre_dam") 
+
+# print out the new object to see what it looks like
+pre_g2
+
+
+# write this object as a csv
+# this allows you to open it in excel
+pre_g2 %>%
+  # save the results as a csv
+  # the file "g2-metrics.csv" should appear in your "data" folder in your RStudio project folder after you run this code  
+  write_csv("data/g2-metrics-pre.csv")
 
 pre_g2
 # save the results as a csv
 # the file "g2-metrics.csv" should appear in your RStudio folder after you run this code  
 pre_g2 %>%
   write_csv("g2-metrics-pre.csv")
-  
+
 ```
 
 
@@ -423,12 +434,12 @@ You will then need to compare the value for pre-and post data and summarize the 
 
 To compare, you will calculate the deviation magnitude, and the % deviation. 
 
-$$\text{DM} = \text{post} - \text{pre} $$
+$$\text{DM} = \text{post} - \text{pre} ~~~ \small{Equation~1}$$
 Where $DM$ is the deviation magnitude, and $pre$ and $post$ are the values for a given metric calculated before and after dam closure, respectively. 
 
-$$ \%D =  \frac{\text{DM}} {\text{pre}} $$
+$$ \%D =  \frac{\text{DM}} {\text{pre}} * 100 ~~~ \small{Equation~2}$$
 
-Where $\%D$ is the per cent deviation, $DM$ is the deviation magnitude, and $pre$ is the value for a given metric calculated before dam closure.  
+Where $\%D$ is the per cent deviation, $DM$ is the deviation magnitude calculated in equation 1, and $pre$ is the value for a given metric calculated before dam closure.  
 
 
 The following code is an example of how to calculate these two metrics using simple values: 

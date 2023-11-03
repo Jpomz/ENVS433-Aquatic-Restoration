@@ -1,0 +1,209 @@
+---
+title: "RVA_KEY"
+author: "Justin Pomeranz"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(RcppRoll)
+pre <- read_csv(here::here("data/IHA/pre_data.csv"))
+bugs <- read_csv(here::here("data/IHA/bug_flows.csv"))
+high <- read_csv(here::here("data/IHA/high-flow-2023.csv"))
+```
+
+# Overview  
+
+This is the key for the RVA section of the assignment
+
+# RVA calculations
+
+## Group 2  
+
+### 1-day values  
+
+We can modify this code slighty to also calculate the SD for the min and max values. 
+
+```{r}
+pre_g2_1d_sd <- pre %>%
+  group_by(y) %>%
+  summarise(min_1 = min(cfs), 
+            max_1 = max(cfs)) %>%
+  summarise(m_min_1 = mean(min_1),
+            sd_min_1 = sd(min_1),
+            m_max_1 = mean(max_1),
+            sd_max_1 = sd(max_1)) %>%
+  pivot_longer(cols = 1:4, names_to = "metric", values_to = "value") %>%
+  separate(col = 1, c("summary_stat", "range", "day-window")) %>%
+  pivot_wider(names_from = 1) %>%
+  mutate(low_sd = m - sd,
+         hi_sd = m+sd) %>%
+  select(-m, -sd)
+
+pre_g2_1d_sd
+```
+
+### 1-day plots
+
+#### Min, compared with bugs
+```{r}
+ggplot(bugs, 
+       aes(x = date, 
+           y = cfs)) +
+  geom_line() +
+  theme_bw() +
+  labs(title = "Mean Daily CFS values at Lee's Ferry, BUGS-flows",
+       y = "cubic feet per second",
+       caption = "The RVA for 1-day minimums is shown with a black horizontal line (mean - sd) and a red dashed line (mean + sd)") +
+  geom_hline(yintercept = 1566) +
+  geom_hline(yintercept = 3352,
+             color = "red", 
+             linetype = "dashed") +
+  coord_cartesian(ylim = c(1500, 20000))
+```
+
+#### Max, compared with high flow
+```{r}
+ggplot(high, 
+       aes(x = date, 
+           y = cfs)) +
+  geom_line() +
+  theme_bw() +
+  labs(title = "Mean Daily CFS values at Lee's Ferry, experimental high flows 2023",
+       y = "cubic feet per second",
+        caption = "The RVA for 1-day maximums is shown with a black horizontal line (mean - sd) and a red dashed line (mean + sd)") +
+   geom_hline(yintercept = 43870) +
+   geom_hline(yintercept = 99770,
+              color = "red", 
+              linetype = "dashed") +
+   coord_cartesian(ylim = c(10000, 100000))
+```
+
+
+#### 3-day values  
+
+* This code is copied from the IHA tutorial
+
+```{r}
+# 3-day min and max
+pre_g2_3d_sd <- pre %>%
+  group_by(y) %>%
+  reframe(mean_3 = roll_mean(cfs, n = 3)) %>%
+  group_by(y) %>%
+  summarise(min_3 = min(mean_3),
+            max_3 = max(mean_3)) %>%
+  summarise(m_min_3 = mean(min_3),
+          sd_min_3 = sd(min_3),
+          m_max_3 = mean(max_3), 
+          sd_max_3 = sd(max_3)) %>%
+  pivot_longer(cols = 1:4, names_to = "metric", values_to = "value") %>%
+  separate(1, c("summary_stat", "range", "day-window")) %>%
+  pivot_wider(names_from = 1) %>%
+  mutate(low_sd = m - sd,
+         hi_sd = m+sd) %>%
+  select(-m, -sd)
+
+pre_g2_3d_sd
+```
+
+### 3-day plots
+
+#### Min, compared with bugs
+```{r}
+ggplot(bugs, 
+       aes(x = date, 
+           y = cfs)) +
+  geom_line() +
+  theme_bw() +
+  labs(title = "Mean Daily CFS values at Lee's Ferry, BUGS-flows",
+       y = "cubic feet per second",
+       caption = "The RVA for 3-day minimums is shown with a black horizontal line (mean - sd) and a red dashed line (mean + sd)") +
+  geom_hline(yintercept = 1758) +
+  geom_hline(yintercept = 3490,
+             color = "red", 
+             linetype = "dashed") +
+  coord_cartesian(ylim = c(1500, 20000))
+```
+
+#### Max, compared with high flow
+```{r}
+ggplot(high, 
+       aes(x = date, 
+           y = cfs)) +
+  geom_line() +
+  theme_bw() +
+  labs(title = "Mean Daily CFS values at Lee's Ferry, experimental high flows 2023",
+       y = "cubic feet per second",
+        caption = "The RVA for 3-day maximums is shown with a black horizontal line (mean - sd) and a red dashed line (mean + sd)") +
+   geom_hline(yintercept = 43870) +
+   geom_hline(yintercept = 99770,
+              color = "red", 
+              linetype = "dashed") +
+   coord_cartesian(ylim = c(10000, 100000))
+```
+
+#### 7-day values
+
+We can repeat the process for the 7-day values. 
+
+* calculations copied from the IHA tutorial, with the sd calculations added
+
+```{r}
+# 7-day min and max
+pre_g2_7d_sd <- pre %>%
+  group_by(y) %>%
+  reframe(mean_7 = roll_mean(cfs, n = 7)) %>%
+  group_by(y) %>%
+  summarise(min_7 = min(mean_7),
+            max_7 = max(mean_7)) %>%
+summarise(m_min_7 = mean(min_7),
+          sd_min_7 = sd(min_7),
+          m_max_7 = mean(max_7), 
+          sd_max_7 = sd(max_7)) %>%
+  pivot_longer(cols = 1:4, names_to = "metric", values_to = "value") %>%
+  separate(1, c("summary_stat", "range", "day-window")) %>%
+  pivot_wider(names_from = 1) %>%
+  mutate(low_sd = m - sd,
+         hi_sd = m+sd) %>%
+  select(-m, -sd)
+  
+
+pre_g2_7d_sd
+```
+### 7-day plots
+
+#### Min, compared with bugs
+```{r}
+ggplot(bugs, 
+       aes(x = date, 
+           y = cfs)) +
+  geom_line() +
+  theme_bw() +
+  labs(title = "Mean Daily CFS values at Lee's Ferry, BUGS-flows",
+       y = "cubic feet per second",
+       caption = "The RVA for 7-day minimums is shown with a black horizontal line (mean - sd) and a red dashed line (mean + sd)") +
+  geom_hline(yintercept = 1923) +
+  geom_hline(yintercept = 3741,
+             color = "red", 
+             linetype = "dashed") +
+  coord_cartesian(ylim = c(1500, 20000))
+```
+
+#### Max, compared with high flow
+```{r}
+ggplot(high, 
+       aes(x = date, 
+           y = cfs)) +
+  geom_line() +
+  theme_bw() +
+  labs(title = "Mean Daily CFS values at Lee's Ferry, experimental high flows 2023",
+       y = "cubic feet per second",
+        caption = "The RVA for 7-day maximums is shown with a black horizontal line (mean - sd) and a red dashed line (mean + sd)") +
+   geom_hline(yintercept = 40439) +
+   geom_hline(yintercept = 92999,
+              color = "red", 
+              linetype = "dashed") +
+   coord_cartesian(ylim = c(10000, 100000))
+```
+

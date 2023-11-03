@@ -1,5 +1,5 @@
 ---
-title: "IHA_key"
+title: "IHA_post_KEY"
 author: "Justin Pomeranz"
 output: html_document
 ---
@@ -9,17 +9,39 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(RcppRoll)
 post <- read_csv(here::here("data/IHA/post_data.csv"))
-source(here::here("iha_pre_source_for_key.R"))
 ```
 
-# Introduction  
+# Overview  
 
-This document is the key for the Indicators of Hydrologic Alteration (IHA) assignment given to ENVS433- Aquatic Restoration Students at Colorado Mesa University
+This document has the answers for all IHA metrics for the time period after the dam was closed. The code to create the answer is not shown, just the results. 
+
+# Preliminaries  
+
+#### Make sure to download the post data from D2L and put it 
+#### Make sure your libraries and data is loaded
+
+```{r, eval=FALSE}
+library(tidyverse)
+library(RcppRoll)
+post <- read_tsv("data/post_data.csv")
+```
+
+* Print out names of post data
+
+```{r, echo=FALSE}
+post
+# names of columns
+names(post)
+```
 
 
-## Plot
 
-```{r}
+### Plot your data  
+
+* It's always a good idea to plot your data as well  
+* below is a simple plot of the mean daily cfs values  
+
+```{r, echo=FALSE}
 ggplot(post, 
        aes(x = date, 
            y = cfs)) +
@@ -28,9 +50,19 @@ ggplot(post,
   labs(title = "Mean Daily CFS values at Lee's Ferry, 1990-1999",
        y = "cubic feet per second")
 ```
+  
+## IHA Metrics  
 
-### Group 1
-```{r}
+### Group 1  
+
+* take `post` data and "group" it by month  
+* calculate average flow value within a month, across years  
+
+  * i.e., take all the observations from January and average them together  
+
+
+```{r, echo=FALSE}
+# do all the steps above and save it in a new R object called `group1_post` 
 group1_post <- post %>%
   group_by(m) %>%
   summarize(m_mean = mean(cfs))
@@ -38,19 +70,31 @@ group1_post <- post %>%
 group1_post
 ```
 
-### Group 2
+* in the code above, the output is a data frame with two columns:  
+  * `m` is the month  
+  
+  * `m_mean` is short for "monthly mean"  
+
+
+### Calculations Group 2  
+
 #### 1-day values  
-```{r}
+
+
+```{r, echo=FALSE}
 post_g2_1d <- post %>%
   group_by(y) %>%
   summarise(min_1 = min(cfs), 
             max_1 = max(cfs)) %>%
   summarise(m_min_1 = mean(min_1), 
             m_max_1 = mean(max_1))
+post_g2_1d
 ```
 
-#### 3-day
-```{r}
+#### 3-day values  
+
+
+```{r, echo=FALSE}
 # 3-day min and max
 post_g2_3d <- post %>%
   group_by(y) %>%
@@ -64,10 +108,9 @@ summarise(m_min_3 = mean(min_3),
 post_g2_3d
 ```
 
+#### 7-day values
 
-#### 7-day
-
-```{r}
+```{r, echo=FALSE}
 # 7-day min and max
 post_g2_7d <- post %>%
   group_by(y) %>%
@@ -75,17 +118,15 @@ post_g2_7d <- post %>%
   group_by(y) %>%
   summarise(min_7 = min(mean_7),
             max_7 = max(mean_7)) %>%
-summarise(m_min_7 = mean(min_7),
+  summarise(m_min_7 = mean(min_7),
           m_max_7 = mean(max_7))
 
 post_g2_7d
 ```
 
-#### 30-day  
+#### 30-day 
 
-* 30-day 
-
-```{r}
+```{r, echo=FALSE}
 # 30-day min and max
 post_g2_30d <- post %>%
   group_by(y) %>%
@@ -93,18 +134,15 @@ post_g2_30d <- post %>%
   group_by(y) %>%
   summarise(min_30 = min(mean_30),
             max_30 = max(mean_30)) %>%
-summarise(m_min_30 = mean(min_30),
-          m_max_30 = mean(max_30))
+  summarise(m_min_30 = mean(min_30),
+            m_max_30 = mean(max_30))
 
 post_g2_30d
 ```
 
 #### 90-day 
 
-
-* 90-day 
-
-```{r}
+```{r, echo=FALSE}
 # 90-day min and max
 post_g2_90d <- post %>%
   group_by(y) %>%
@@ -112,29 +150,17 @@ post_g2_90d <- post %>%
   group_by(y) %>%
   summarise(min_90 = min(mean_90),
             max_90 = max(mean_90)) %>%
-summarise(m_min_90 = mean(min_90),
+  summarise(m_min_90 = mean(min_90),
           m_max_90 = mean(max_90))
 
 post_g2_90d
 ```
 
-```{r}
-# combine all the columns of results for the 5 windows into one object
-post_g2 <- bind_cols(post_g2_1d,
-          post_g2_3d,
-          post_g2_7d,
-          post_g2_30d,
-          post_g2_90d) %>%
-  pivot_longer(cols = starts_with("m_"), names_to = "metric", values_to = "mean") %>%
-  separate(metric, c("drop", "metric", "day-window")) %>%
-  select(!drop) 
-```
+### Calculations Group 3  
 
+#### Minimum Julian dates
 
-
-### Group 3
-
-```{r}
+```{r, echo=FALSE}
 post_min_julian <- post %>%
   group_by(y) %>%
   filter(cfs == min(cfs)) %>%
@@ -145,72 +171,19 @@ post_min_julian <- post %>%
 post_min_julian
 ```
 
-* calculate for max flow  
+#### Maximum Julian dates  
 
-* similar code as above, but note name changes and function inside filter to `max` 
-
-```{r}
+```{r, echo=FALSE}
 post_max_julian <- post %>%
   group_by(y) %>%
   filter(cfs == max(cfs)) %>%
   select(cfs, y, j_date) %>%
   ungroup() %>%
-  summarise(max_j_date = mean(j_date))
+  summarise(min_j_date = mean(j_date))
 
 post_max_julian
 ```
 
-# DM and %D  
+# Moving forward  
 
-## Group 1 DM
-```{r}
-# deviation magnitude
-g1_dm <- group1_post - group1_pre
-g1_dm
-```
-
-## Group 1 %D
-```{r}
-g1_pd <- g1_dm / group1_pre * 100
-g1_pd
-```
-
-## Group 2 DM
-```{r}
-# deviation magnitude
-g2_dm <- post_g2$mean - pre_g2$mean_cfs
-data.frame(metric = post_g2$metric,
-           "day_window" = post_g2$`day-window`,
-           dm = g2_dm)
-```
-
-## Group 2 %D
-```{r}
-g2_pd <- g2_dm / pre_g2$mean_cfs * 100
-data.frame(metric = post_g2$metric,
-           "day_window" = post_g2$`day-window`,
-           "percent_dm" = g2_pd)
-
-```
-
-## group 3 Min Julian DM
-```{r}
-g3_min_julian_dm <- post_min_julian - pre_min_julian
-g3_min_julian_dm
-```
-## group 3 Min Julian %D
-```{r}
-g3_min_julian_dm / pre_min_julian * 100
-```
-
-
-## group 3 Max Julian DM
-```{r}
-g3_max_julian_dm <- post_max_julian - pre_max_julian
-g3_max_julian_dm
-```
-## group 3 Max Julian %D
-```{r}
-g3_max_julian_dm / pre_max_julian * 100
-```
-
+You now have all the answers for part 1. As part of the assignment, you need to submit your R scripts showing how you calculated the metrics. However, if you get stuck or are unsure how to proceed, between the tutorial and this key, you have all the numbers to calculate the Deviation Magnitude and the Percent Deviation. 
