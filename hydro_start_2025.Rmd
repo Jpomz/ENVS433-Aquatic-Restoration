@@ -30,7 +30,7 @@ You will need to download the:
   * Do **NOT** put this code into your script  
 
 
-```{r setup, eval=FALSE}
+```{r packages, eval=FALSE}
 install.packages("dataRetrieval")
 install.packages("tidyverse")
 
@@ -96,7 +96,8 @@ co_r
 View(co_r)
 ```
 
-* This produces a data frame (table) with `nrow(co_r)` rows and `ncol(co_r)` columns  
+* This produces a data frame (table) with `r nrow(co_r)` rows and `r ncol(co_r)` columns  
+* Each row is the mean value for a single day 
 * For our purposes, we only need the columns named:  
   * `time` : In this case, the date in YYYY-MM-DD format  
   * `value` which is the mean discharge (Q) for that day  
@@ -175,5 +176,42 @@ ggplot(daily_pe,
        y = "Flow (Q)",
        x = "Percent Exceedance")
 ```
+
+## What flow and percent exceedances  
+
+* We can use the `daily_pe` object to see what flow equates to a specific percent exceedance  
+
+```{r, eval=FALSE}
+# 10% exceedance?
+daily_pe |>
+  filter(PE = 10)
+```
+* this doesn't work, because by chance there is not an exact value of 10.0  
+* But we can look for the approximate value with this:  
+
+```{r}
+daily_pe |>
+  filter(PE >= 9.9,
+         PE <= 10.1)
+```
+
+* That's probably too wide of a band, so let's add another decimal place  
+
+```{r}
+daily_pe |>
+  filter(PE > 9.99,
+         PE < 10.01)
+```
+* so, the flow in the Colorado river exceeded or met 11400 CFS only 10% of the time  
+* In other words, a flow of 11400 CFS was relatively rare  
+
+* What are common flow values?  
+
+```{r}
+daily_pe |>
+  filter(PE > 74.99,
+         PE < 75.01)
+```
+* a flow of 2870 CFS was exceeded ~75% of the time, so this value is fairly common  
 
 
