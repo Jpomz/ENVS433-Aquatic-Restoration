@@ -1,0 +1,179 @@
+---
+title: "Hydrograph metrics"
+output: html_document
+date: "2025-09-12"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Overview
+
+This tutorial covers:  
+* Downloading flow data from USGS gauges  
+* "Wrangling" the data into a more flexible format  
+* Calculating basic hydrograph metrics  
+  * Flow Duration Curves  
+  * Annual Flood Frequency  
+  * Empirical return intervals  
+  * Estimating return intervals  
+  
+* Calculating some of the IHA metrics  
+
+## Setup  
+
+You will need to download the:  
+* `dataRetrieval` and `tidyverse` packages  
+* You only need to do this once per machine  
+* copy the following code into your console and run it (press enter)  
+  * Do **NOT** put this code into your script  
+
+
+```{r setup, eval=FALSE}
+install.packages("dataRetrieval")
+install.packages("tidyverse")
+
+```
+
+## Start a new script  
+
+Now that we have the packages installed, we can start a new script (white square with a green plus sign icon in the top left) and begin our analysis.  
+
+### Load Libraries  
+
+* Only need to install package once  
+* Need to "load" it every time  
+
+```{r, warning=FALSE, message=FALSE}
+library(dataRetrieval)
+library(tidyverse)
+```
+
+### Download data  
+
+* We will use the `dataRetrieval` package to download data  
+
+* For a more complete tutorial on the `dataRetrival` package, [see this website](https://doi-usgs.github.io/dataRetrieval/index.html)  
+
+* Here, we will download data from the USGS gauge on the Colorado River near the UT-CO stateline  
+
+* Save variables to make download easier
+
+```{r}
+
+siteNo <- "USGS-09163500" #CO River near CO-UT stateline
+# you will need to look up a site code for a different gauge for your assignment
+
+pCode <- "00060" #discharge
+
+# all daily data from 2003-2023
+start.date <- "2003-10-01"
+end.date <- "2023-12-31"
+# For your assignment, make sure there is at least 10 yers of data, and change the dates as appropriate
+```
+
+* Now use the `read_waterdata_daily()` function to download the data, and save it as an object called `co_r`  
+
+```{r}
+co_r <- read_waterdata_daily(
+  monitoring_location_id = siteNo,
+  parameter_code = pCode,
+  time = c(start.date, end.date))
+```
+
+* We can now print out that that data to see what it looks like:  
+
+```{r}
+# just first few rows:
+co_r
+# statistic_id == 00003 = daily
+```
+
+* You can also `View()` the whole thing with this code:  
+* Note that the following does not run in this tutorial for visualization purposes, but I will do it in class.  
+```{r, eval=FALSE}
+View(co_r)
+```
+
+* This produces a data frame (table) with `nrow(co_r)` rows and `ncol(co_r)` columns  
+* For our purposes, we only need the columns named:  
+  * `time` : In this case, the date in YYYY-MM-DD format  
+  * `value` which is the mean discharge (Q) for that day  
+    * We will rename it to be `q`  
+  * We could also keep the `unit_of_measure` column, bit it's always CFS, so we will just have to remember that  
+* We also want to remove the "geometry attributes"  
+  * Discussion of this is beyone the scope of this tutorial  
+  
+```{r}
+# remove "geometry" attributes
+attr(co_r, "class") <- "data.frame"
+
+# overwrite co_r to just be the two columns
+# and rename value column to be "q"
+co_r <- co_r |>
+  select(time, value)|>
+  rename(q = value)
+co_r
+```
+
+
+## Calculate Daily Flow Duration Curves  
+
+Recall that a FDC is calculated as:  
+
+$$
+\text{% Exceedance} = \frac{m}{N+1}*10
+$$
+
+where $m$ is the rank of the flow, and $N$ is the number of observations in the data  
+
+* Sort the flows so that the highest is the first row, and the smallest flows is the last row  
+
+```{r}
+daily_pe <- co_r |>
+  # sort by the q column
+  arrange(-q) |>
+  # add a "rank" column
+  mutate(m_rank = 1:n()) |>
+  # calculate % exceedance
+  mutate(PE = (m_rank / (n() +1)) *100)
+
+# print out the new data object
+daily_pe
+```
+
+* plot the Flow Duration Curve  
+* x = percent exceedance (PE)  
+* y = q  
+
+```{r}
+ggplot(daily_pe, 
+       aes(x = PE, 
+           y = q)) +
+  geom_line()
+```
+* FDC's are usually plotted with a logarithmic y-axis  
+
+```{r}
+ggplot(daily_pe, 
+       aes(x = PE, 
+           y = q)) +
+  geom_line() +
+  scale_y_log10()
+```
+* we can also add a title and axis labels for clarity  
+
+```{r}
+ggplot(daily_pe, 
+       aes(x = PE, 
+           y = q)) +
+  geom_line() +
+  scale_y_log10() +
+  labs(title = "Daily Flow Duration Curve",
+       subtitle = "CO River near CO-UT stateline",
+       y = "Flow (Q)",
+       x = "Percent Exceedance")
+```
+
+
