@@ -1,0 +1,189 @@
+---
+title: "Hydrology Tutorial"
+author: "Justin Pomeranz"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Overview  
+
+This tutorial will show you how to access and analyze flow data from USGS stream gauges. 
+
+# Setup  
+
+### Package Installation  
+
+Make sure to download the following packages.  
+* `tidyverse`  
+* `dataRetrival`  
+
+**Note:** that you only need to install the packages once per machine, but you need to load them using the `library()` command every time you open RStudio.  
+
+```{r, eval=FALSE}
+install.packages("dataRetrieval")
+install.packages("tidyverse")
+```
+
+### Load Packages  
+
+* Everyone needs to do this every time you open RStudio  
+```{r, message=FALSE, warning=FALSE}
+library(dataRetrieval)
+library(tidyverse)
+```
+
+# Access data for one year  
+
+* Download daily streamflow data for the Colorado River near the CO-UT State line  
+
+```{r}
+co2019 <- readNWISdv(siteNumber = "09163500",
+                     parameterCd = "00060",
+                     startDate = "2019-01-01",
+                     endDate = "2020-01-01")
+```
+
+**NOTE**: If you have problems with the above code, you may need to install the `httr2` package  
+
+* `siteNumber`: the USGS site code (usually 8 digits)  
+* `parameterCd`: "00060" is for streamflow in cubic feet per seconf (CFS)    
+  * other parameter codes include:  
+    * "00065"	= Gage Height  
+    
+    * "00010"	= Temperature  
+    
+    * "00400"	= pH  
+* `startDate` and `endDate` need to be in "YYYY-MM-DD" format.  
+
+## Explore data  
+
+* Let's look at our data  
+
+```{r}
+names(co2019)
+head(co2019)
+```
+
+* The information we are interested in is `Date` and `X_00060_00003`  
+
+* Let's rename the `X_00060...` column to be `flow` for simplicity  
+
+```{r}
+co2019 <- co2019 |>
+  rename("flow" = "X_00060_00003")
+head(co19)
+```
+
+## Plot Hydrograph  
+
+* Make a plot with `Date` in the x-axis and `flow` on the y-axis  
+* Include informative title  
+* add units to y-axis label  
+
+```{r}
+ggplot(co2019, 
+       aes(x = Date, 
+           y = flow)) +
+  geom_line() +
+  labs(title= "Streamflow for the Colorado River in 2019",
+       subtitle = "Gage 09163500 near the CO-UT border",
+       y = "Flow (CFS)") +
+  theme_bw()
+```
+* Qualitatively describe this flow pattern  
+* Consider the:  
+  * Magnitude  
+  * Frequency  
+  * Duration  
+  * Timing  
+  * Rate of change  
+  
+# Data from longer time-series  
+
+## Download 1990-2020 data  
+
+* Let's look at flow data for the same site across the last 30 years  
+
+```{r}
+co_30y <- readNWISdv(siteNumber = "09163500",
+                     parameterCd = "00060",
+                     startDate = "1991-01-01",
+                     endDate = "2020-01-01")
+co_30y <- co_30y |>
+  rename("flow" = "X_00060_00003")
+```
+
+## Full hydrograph  
+```{r}
+ggplot(co_30y, 
+       aes(x = Date, 
+           y = flow)) +
+  geom_line() +
+  labs(title= "30 years of Colorado River Streamflow",
+       y = "Flow (CFS)") +
+  theme_bw()
+```
+
+## Annual Maximum Series  
+
+* Compute the annual maximum series  
+* First need to modify the data  
+* make a `y`, `m`, and `d` column for the year, month and day, respectively  
+
+```{r}
+co_30y <- co_30y |>
+  mutate(y = year(Date),
+         m = month(Date),
+         d = day(Date))
+```
+
+* Now, we can group the data by year (`y`) to calculate the maximum daily flow value for that year  
+
+```{r}
+co_30y_ams <- co_30y |>
+  group_by(y) |>
+  summarise(y_max = max(flow))
+
+co_30y_ams
+```
+* Our new data object has 31 rows of data, one for each year  
+* `y_max` contains the maximum daily flow value recorded in that year  
+
+* Now, we need to calculate the rank of the flows  
+* first, `arrange()` the data from high to low flow values  
+  * `-` in arrange puts biggest value on top  
+* then add a `rank` column with `1:n()`  
+  * This code makes a series of numbers starting at 1, and going to the number of rows in the data object (in this case, 30)
+
+```{r}
+co_30y_ams <- co_30y_ams |>
+  arrange(-y_max) |>
+  mutate(rank = 1:n()) 
+co_30y_ams
+```
+* Finally, calculate the probability using the Weibull Distribution  
+
+```{r}
+co_30y_ams <- co_30y_ams |>
+  mutate(p_weibull = (n()+1) / rank) 
+co_30y_ams
+```
+
+
+```{r}
+ggplot(co_30y_ams,
+       aes(x = p_weibull,
+           y = y_max)) +
+  geom_point()
+```
+
+## Calculate the return interval
+
+```{r}
+co_30y_ams <- co_30y_ams |>
+  mutate(return_interval = 1 / p_weibull) 
+co_30y_ams
+```

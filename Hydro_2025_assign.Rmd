@@ -76,8 +76,8 @@ library(tidyverse)
   
 3. Plot and qualitatively describe the flow regime for your gauge in the period of record that you have  
 
-    * You should produce a line plot (`geom_line`) with flow on the y-axis and date on the x-axis  
-  
+    * You should produce a line plot (`geom_line`) with flow on the y-axis and date on the x-axis
+    
     * Include a plot title and informative axis labels  
   
     * Your plot should be copied into your word document  
@@ -86,6 +86,18 @@ library(tidyverse)
   
     * Under your plot, described the flow regime using the 5 attributes described in the *Natural Flow Regime* paper by Poff et al.  
   
+  
+    * If your gauge has many years of data (i.e., more than 20), you may want to only plot ~10 years of data to describe the flow regime  
+    
+        * You can do this by creating a "year" column as in the tutorial for the annual maximum section and then filtering out observations greater than ~10 years ago  
+        
+        * i.e.:
+        
+```{r, eval=FALSE}
+your_dat |>
+  filter(year > 2013) |>
+  ggplot(...)
+```
 
 4. Calculate the Daily Flow Duration Curve  
 

@@ -443,7 +443,20 @@ on the y-axis and date on the x-axis</p></li>
 <li><p>Under your plot, described the flow regime using the 5 attributes
 described in the <em>Natural Flow Regime</em> paper by Poff et
 al. </p></li>
+<li><p>If your gauge has many years of data (i.e., more than 20), you
+may want to only plot ~10 years of data to describe the flow regime</p>
+<ul>
+<li><p>You can do this by creating a “year” column as in the tutorial
+for the annual maximum section and then filtering out observations
+greater than ~10 years ago</p></li>
+<li><p>i.e.:</p></li>
 </ul></li>
+</ul></li>
+</ol>
+<pre class="r"><code>your_dat |&gt;
+  filter(year &gt; 2013) |&gt;
+  ggplot(...)</code></pre>
+<ol start="4" style="list-style-type: decimal">
 <li><p>Calculate the Daily Flow Duration Curve</p>
 <ul>
 <li><p>Clean up the data as we did in the class tutorial</p></li>
