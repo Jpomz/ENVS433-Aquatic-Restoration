@@ -1,0 +1,206 @@
+---
+title: "Hydrology Assignment 2025"
+subtitle: "ENVS433 Aquatic Restoration"
+output: 
+  html_document: 
+    toc: true 
+    toc_depth: 2 
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Overview  
+
+In this assignment, you will:  
+
+* Download flow data from a USGS Gauge of your choosing  
+
+* Plot and qualitatively describe the flow regime for your gauge  
+
+* Calculate the Daily Flow Duration Curve  
+
+    * Plot the daily FDC  
+  
+    * Report the Q for specific percent Exceedance values  
+  
+* Calculate the Annual Maximum Series (AMS-FDC)  
+  
+    * Plot the annual FDC  
+  
+    * Report the Q for approximate *x*-year floods  
+  
+* Calculate risk probabilities for different scenarios  
+
+
+## Turn in checklist  
+
+* For full credit, you will need to submit:  
+
+  1. A writeup of your answers, plots, and findings as a word document  
+
+  2. Your R script which contains all the code for your calculations, plots, etc.  
+
+## R Script set up  
+
+* Be sure to include the following at the top of your script:  
+
+```{r, eval=FALSE}
+# Your name  
+# Hydrology Assignment  
+library(dataRetrieval)
+library(tidyverse)
+
+```
+
+## Assignment  
+
+1. Go to the [USGS website](https://waterdata.usgs.gov/nwis/rt) and select a stream flow gauge of your choice  
+
+    * This could be from your hometown, a place you want to visit, etc. 
+    
+    * Make sure the gauge has at least 10 years of data  
+  
+    * The more years of data the better, but note that recent data may not yet be "approved"  
+  
+    * In other words, make your end date sometime earlier this year, such as `"2025-06-01"`  
+  
+2. Download the data for your stream gauge  
+
+    * You will need to modify the `siteNo` from our in class tutorial  
+  
+    * You will also need to modify the `start_date` and `end_date` to match the period of record for your gauge  
+  
+    * Do not modify the `pCode`  
+  
+3. Plot and qualitatively describe the flow regime for your gauge in the period of record that you have  
+
+    * You should produce a line plot (`geom_line`) with flow on the y-axis and date on the x-axis
+    
+    * Include a plot title and informative axis labels  
+  
+    * Your plot should be copied into your word document  
+  
+      * use the `ggsave()` command and insert the .png file  
+  
+    * Under your plot, described the flow regime using the 5 attributes described in the *Natural Flow Regime* paper by Poff et al.  
+  
+  
+    * If your gauge has many years of data (i.e., more than 20), you may want to only plot ~10 years of data to describe the flow regime  
+    
+        * You can do this by creating a "year" column as in the tutorial for the annual maximum section and then filtering out observations greater than ~10 years ago  
+        
+        * i.e.:
+        
+```{r, eval=FALSE}
+your_dat |>
+  filter(year > 2013) |>
+  ggplot(...)
+```
+
+4. Calculate the Daily Flow Duration Curve  
+
+    * Clean up the data as we did in the class tutorial  
+  
+    * Calculate the Percent Exceedance  
+  
+    * Plot the daily FDC  
+  
+      * Be sure to have both the *x*- and *y*-axes on the log10 scale  
+    
+      * Add a Title and axis labels to your plot  
+    
+    * Copy the plot into your word document  
+    
+5. What approximate flow values represent the following percent exceedances?  
+
+    * Remember that you may not have exact percent exceedance values in your data.  
+  
+    * You may have to filter around the values i.e., PE > 0.9, PE < 1.1   
+  
+    * Your R script needs to  contain the code to calculate each answer  
+  
+    * Your word document needs to have each answer written out  
+
+    5.1. 0.1%  
+  
+    5.2. 1%  
+  
+    5.3. 10%  
+  
+    5.4. 25%  
+  
+    5.5. 50%  
+  
+    5.6. 75%  
+  
+    5.7. 90%  
+  
+    5.8. 99%  
+  
+    5.9.  99.9%  
+  
+6. Calculate the Annual Maximum Flow Duration Curve (AMS-FDC)  
+
+    * Clean up the data format as described in the class tutorial  
+  
+    * Calculate the annual maximum flows  
+  
+      * Your code should include a `group_by(...)` and then a `summarize(...)` command in it  
+    
+    * Calculate the return interval ($R_i$) and probability for all annual maximums  
+  
+7. Answer the following questions  
+
+    * Your R script needs to  contain the code to calculate each answer  
+  
+    * Your word document needs to have each answer written out  
+
+    7.1. What was the year flow value, and return interval for the highest annual maximum flow?  
+  
+    7.2. What was the year flow value, and return interval for the lowest annual maximum flow?  
+  
+7. Report the flow values for the following *x*-year floods  
+  
+    * If your data does not have an exact return interval, report the flow value and return intervals for the next highest and lowest value.  
+  
+    * i.e., in the tutorial, there was not a return interval of 10 years, but we reported the flow for the 11- and the 7.33- year flood  
+  
+    * If your data stops at a return interval less than the flood asked for, report the highest flow and return interval in your data  
+  
+    * Your R script needs to  contain the code to calculate each answer  
+  
+    * Your word document needs to have each answer written out  
+  
+    8.1. the 1-year flood  
+  
+    8.2. The 1.25-year flood  
+  
+    8.3. The 2-year flood  
+  
+    8.4. The 5-year flood  
+  
+    8.5. The 10-year flood  
+  
+    8.6. The 35-year flood  
+  
+    8.7. the 50-year flood  
+  
+  
+8. Calculating risk  
+
+    * For the following scenarios, calculate the total risk involved in your R script, and write out your answer in your word document    
+  
+    9.1. You just bought a house in the 100-year flood plain. What is the risk that your home will be flooded during a typical 30-year mortgage?  
+  
+    9.2. Calculate the same risk as in 8.1, but this time the house in question is in the 20-year flood plain.  
+  
+    9.3. What is the risk of a 5-year flood happening in the next 5 years?  
+  
+    9.4. What is the return interval for a flood with an AEP% of 85%? What is the risk that a flood of this magnitude will happen next year?  
+  
+## Submission   
+
+* Turn in both your word document and your R script files on D2L  
+
