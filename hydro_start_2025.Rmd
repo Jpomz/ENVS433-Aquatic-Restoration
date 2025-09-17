@@ -3,7 +3,7 @@ title: "Hydrograph metrics"
 output: 
   html_document:
     toc: true
-    toc_depth: 2
+    toc_depth: 3
     toc_float: true
     df_print: paged
 ---
@@ -18,6 +18,8 @@ This tutorial covers:
 
 * Downloading flow data from USGS gauges  
 
+* Basic plotting of hydrograph data  
+
 * "Wrangling" the data into a more flexible format  
 
 * Calculating basic hydrograph metrics  
@@ -28,10 +30,6 @@ This tutorial covers:
 
   * Empirical return intervals  
 
-  * Estimating return intervals  
-
-  
-* Calculating some of the IHA metrics  
 
 ## Setup  
 
@@ -106,6 +104,57 @@ co_r
 * Note that the following does not run in this tutorial for visualization purposes, but I will do it in class.  
 ```{r, eval=FALSE}
 View(co_r)
+```
+
+### Plot Basic Hydrograph  
+
+* Make a plot with `time` in the x-axis and `value` on the y-axis  
+    * Here `time` is actually the date  
+    * `value` is CFS (we will change the name of the column later for simplicity)  
+    
+* Include informative title  
+
+* add units to y-axis label  
+
+```{r}
+ggplot(co_r, 
+       aes(x = time, 
+           y = value)) +
+  geom_line() +
+  labs(title= "Streamflow for the Colorado River",
+       subtitle = "Gage 09163500 near the CO-UT border",
+       y = "Streamflow (CFS)") +
+  theme_bw()
+```
+* Qualitatively describe this flow pattern  
+* Consider the:  
+  * Magnitude  
+  * Frequency  
+  * Duration  
+  * Timing  
+  * Rate of change  
+  
+  
+### Just plotting one year  
+
+* Your data may have too many years to easily view the flow regime  
+
+* We will create a `y` column to indicate the year  
+
+* Then we will `filter` a single year value to plot that  
+
+```{r}
+co_r |>
+  mutate(y = year(time)) |>
+  filter(y == 2015) |> # Make sure you chnage this to match one year which occurs in your data
+  ggplot( 
+       aes(x = time, 
+           y = value)) +
+  geom_line() +
+  labs(title= "Streamflow for the Colorado River in 2015", # make sure year in title matches
+       subtitle = "Gage 09163500 near the CO-UT border",
+       y = "Streamflow (CFS)") +
+  theme_bw()
 ```
 
 ### Data cleanup for daily FDC  
@@ -353,7 +402,40 @@ ams_ri <- ams |>
 ams_ri
 ```
 
+
+### Flow estimates for x-year floods  
+
+* We can now use this data to see what flow is associated with a specific return interval  
+
+#### Bankfull flow  
+
+* The annual bankfull flow generally has a return interval between 1.1 and 2 years  
+
+* What is the bankfull flow for the Colorado River at this station?  
+
+```{r}
+ams_ri |>
+  filter(Ri <= 2,
+         Ri >= 1.1)
+```
+
+* This returns a broad range of values: from 5,090-23,500 CFS  
+
+* Let's say the bankfull flow here has a return interval of 1.5 years.  
+
+* We can see above that we don't have that exact return interval, but we can filter values close to that:  
+
+```{r}
+ams_ri |>
+  filter(Ri <= 1.6,
+         Ri >= 1.4)
+```
+* So, assuming that the 1.5 return interval is the bankfull flow, we would estimate that to be between 14,200-14,900 CFS.  
+
+#### 10-year flood  
+
 * What flow approximately represents the 10-year flood?  
+
 * Recall that it is unlikely there is exactly a return interval of 10, so use bounds to capture the location
 
 ```{r}
@@ -364,8 +446,70 @@ ams_ri |>
 
 * So the 11-year flood has a Q of 38900 CFS, and the 7.3-year flood has a flow of 37200. 
 
-* The 10-year flood must be less than 38900, and more than 37200, but what is the exact value?  
+#### 50-year flood  
+* What flow represents the 50-year flood? 
+
+```{r}
+ams_ri |>
+  filter(Ri <= 100,
+         Ri >= 40)
+```
+
+* This means that there is no data with an $R_i$ between 40 and 100  
+
+* Let's see what the maximum $R_i$ value in our data is  
+
+```{r}
+ams_ri |>
+  filter(Ri == max(Ri))
+```
+
+* In this data, the biggest return interval is 22 years, and has a flow of 46800 CFS  
+
+* For this data, all we can say about the 50-year flood is that it is greater than 46800  
+
+* Note that there is a method for extrapolating return intervals called the Log III Pearson regression  
+
+* Unfortunately, this analysis is beyond the scope of this course, but I want you to be aware of its existence  
+
+* Note that the data you find for the assignment may be more extensive than this, so you may be able to report more accurate estimates for floods with higher return intervals  
 
 
-## To be continued...  
+## Risk   
+
+* Risk is calculated with the following formula:  
+
+$$
+\text{Risk} = 1 - (1 - P)^n
+$$
+* What's the risk of having a flood with a 0.15 probability in the next 2 years?  
+
+* $P = 0.15$ and $n = 2$  
+
+* We can use R as a fancy calculator and plug these numbers in 
+
+```{r}
+1 - (1 - 0.15)^2
+```
+* So there is a 0.2775 or 27.75% chance of having that flood occur in the next two years  
+
+* What's the risk of having a flood with a return interval of 50 years in the next 10 years?  
+
+* here $n = 10$ but we have to calculate $P$  
+
+$$
+P = 1 / T
+$$
+* Where $T$ is the return interval in years  
+
+* So, the risk can be calculated as:  
+
+```{r}
+1 - (1 - (1/50))^10
+```
+* So the probability that a 50-year flood happens in the next 10 years is 0.183, or an 18.3% chance  
+
+## The end  
+
+* You should now have everything you need to complete the Hydrology assignment  
 
