@@ -1,7 +1,11 @@
 ---
 title: "Hydrograph metrics"
-output: html_document
-date: "2025-09-12"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 2
+    toc_float: true
+    df_print: paged
 ---
 
 ```{r setup, include=FALSE}
@@ -11,13 +15,21 @@ knitr::opts_chunk$set(echo = TRUE)
 ## Overview
 
 This tutorial covers:  
+
 * Downloading flow data from USGS gauges  
+
 * "Wrangling" the data into a more flexible format  
+
 * Calculating basic hydrograph metrics  
+
   * Flow Duration Curves  
+
   * Annual Flood Frequency  
+
   * Empirical return intervals  
+
   * Estimating return intervals  
+
   
 * Calculating some of the IHA metrics  
 
@@ -96,6 +108,8 @@ co_r
 View(co_r)
 ```
 
+### Data cleanup for daily FDC  
+
 * This produces a data frame (table) with `r nrow(co_r)` rows and `r ncol(co_r)` columns  
 * Each row is the mean value for a single day 
 * For our purposes, we only need the columns named:  
@@ -124,10 +138,10 @@ co_r
 Recall that a FDC is calculated as:  
 
 $$
-\text{% Exceedance} = \frac{m}{N+1}*10
+\text{% Exceedance} = \frac{m}{N+1}*100
 $$
 
-where $m$ is the rank of the flow, and $N$ is the number of observations in the data  
+where $m$ is the rank of the flow, and $N$ is the number of observations (number of days) in the data  
 
 * Sort the flows so that the highest is the first row, and the smallest flows is the last row  
 
@@ -154,14 +168,15 @@ ggplot(daily_pe,
            y = q)) +
   geom_line()
 ```
-* FDC's are usually plotted with a logarithmic y-axis  
+* FDC's are usually plotted with a logarithmic y- and x-axes  
 
 ```{r}
 ggplot(daily_pe, 
        aes(x = PE, 
            y = q)) +
   geom_line() +
-  scale_y_log10()
+  scale_y_log10() +
+  scale_x_log10()
 ```
 * we can also add a title and axis labels for clarity  
 
@@ -171,9 +186,10 @@ ggplot(daily_pe,
            y = q)) +
   geom_line() +
   scale_y_log10() +
+  scale_x_log10() +
   labs(title = "Daily Flow Duration Curve",
        subtitle = "CO River near CO-UT stateline",
-       y = "Flow (Q)",
+       y = "Q (CFS)",
        x = "Percent Exceedance")
 ```
 
@@ -184,7 +200,7 @@ ggplot(daily_pe,
 ```{r, eval=FALSE}
 # 10% exceedance?
 daily_pe |>
-  filter(PE = 10)
+  filter(PE == 10)
 ```
 * this doesn't work, because by chance there is not an exact value of 10.0  
 * But we can look for the approximate value with this:  
@@ -195,7 +211,8 @@ daily_pe |>
          PE <= 10.1)
 ```
 
-* That's probably too wide of a band, so let's add another decimal place  
+* The 10% exceedance is around 11300-11500 CFS  
+* That's probably too wide of a band, so let's add another decimal place to our `filter` comand  
 
 ```{r}
 daily_pe |>
@@ -214,4 +231,141 @@ daily_pe |>
 ```
 * a flow of 2870 CFS was exceeded ~75% of the time, so this value is fairly common  
 
+## Calculate Annual Maximum Flow Duration Curves (AMS-FDC)  
+
+* For this, we will be going back to our `co_r` data set  
+* Recall that the formula for AMS-FDC is:
+
+$$
+R_{i} = \frac{m+1}{N}
+$$
+* Where $R_i$ is the recurrence interval (in years)  
+
+* $m$ is rank  
+
+* $N$ is the number of *years* in the data set  
+
+### Data cleanup for AMS-FDC  
+
+* Our data right now shows the mean flow value for every day across our timeframe  
+* for the AMS-FDC, we want the single largest value for every year in the dataset  
+* In other words, we need to group the data by year and only keep the maximum value  
+
+* Currently, `co_r` has a `time` column which has the date information in it  
+* There are many methods for sorting and grouping data which is in a date-format (YYYY-MM-DD)  
+* The method we are going to use is to make separate columns for year month and day (they will be named `y`, `m`, and `d`)  
+* We can do this using handy functions that are a part of the `tidyverse` package we already loaded  
+
+### Make `y`, `m`, and `d` columns  
+
+* we will use the `mutate()` function to add new columns  
+* `mutate()` adds a column but does not change the number of rows  
+
+```{r}
+co_r |>
+  mutate(y = year(time))
+```
+
+* What this code is doing is making a new column called `y` for the year  
+* It it doing this by looking at the data in the `time` column, and extracting the value for year in that column  
+* note that this only works becasue our `time` column was already in a date-format  
+
+#### How do we check the data format?  
+
+* We can check the format in two different ways with the following code:
+
+```{r}
+co_r # note the <date> notation underneath time
+# also note the <dbl> notation under Q. dbl is short for "double" which means it is a number format whic can contain decimals
+co_r |>
+  pull(time) |>
+  class() # the output here says "Date"
+```
+
+* If you follow this tutorial to complete your assignment, your data should be in the correct format  
+* If you try the `year()` function and it doesn't work, it *most likely* means the data is in the wrong format.  
+  * If you have this problem, come to my office hours or ask me when we have work time in class.  
+  
+### Continue with making separate date columns  
+
+* There is also a `month()` and `day()` function which will extract the relevant date information  
+
+```{r}
+# overwrite co_r to have the date columns
+co_r <- co_r |>
+  mutate(y = year(time),
+         m = month(time), 
+         d = day(time))
+# print out our new co_r to see what it looks like  
+co_r
+```
+
+* note that the class for our new columns are all <dbl>  
+* This is convenient for our upcoming calculations, but R no longer views them as "dates"  
+* we will keep the `time` column so that we have the date information in case we need it later  
+
+### Calculate Annual Maximum flows  
+
+* Recall that we want the single largest value for each year  
+* To do this, we will first "group" our data by year (`y` column)  
+* This will create a unique group id for each year, and the following commands will all be performed on the years individually  
+
+```{r}
+co_r |>
+  group_by(y)
+```
+
+* Note that the data looks the same, but there is now a `Groups: y[21]` line at the top of the data output  
+* this is saying that the data now contains groups based on values in the `y` column, and there are `21` unique groups  
+
+* Now we `summarize()` the data to keep the single largest value per group/year  
+* The `summarize()` function reduces the data to have a single row per group  
+
+
+```{r}
+# ams is short for annual maximum series
+ams <- co_r |>
+  group_by(y) |>
+  summarize(high_flow = max(q))
+
+# print out the new object
+ams
+```
+
+* The `ams` object now has 21 rows, one per group/year  
+
+
+### Calculate AMS-FDC  
+
+* To claculate the AMS-FDC, we need to calculate the rank and arrange in descending order again  
+
+```{r}
+ams_ri <- ams |>
+  # sort by the high_flow column
+  arrange(-high_flow) |>
+  # add a "rank" column
+  mutate(m_rank = 1:n()) |>
+  # calculate the return interval, and the probability
+  mutate(Ri = (n() + 1) / m_rank,
+         pr = 1 / Ri)
+
+# print out the new data object
+ams_ri
+```
+
+* What flow approximately represents the 10-year flood?  
+* Recall that it is unlikely there is exactly a return interval of 10, so use bounds to capture the location
+
+```{r}
+ams_ri |>
+  filter(Ri <= 15,
+         Ri >= 7)
+```
+
+* So the 11-year flood has a Q of 38900 CFS, and the 7.3-year flood has a flow of 37200. 
+
+* The 10-year flood must be less than 38900, and more than 37200, but what is the exact value?  
+
+
+## To be continued...  
 
